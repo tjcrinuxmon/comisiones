@@ -405,7 +405,7 @@ body.rol-consejero tr:not(.fila-yo) td.celda .presi{display:none}
     <button onclick="window.print()">Imprimir o guardar PDF</button>
     <button class="peligro solo-admin" onclick="limpiar()">Limpiar todo</button>
     <span id="quienSoy" class="quien-soy"></span>
-    <button class="salir" onclick="salir()">Cambiar de usuario</button>
+    <button class="salir" onclick="salir()">Salir</button>
   </div>
 </div>
 
@@ -2035,7 +2035,7 @@ async function revisarConsejero(){
   }catch(e){ return mostrarAviso('Error de red.'); }
   primerAcceso = !tiene;
   c1.style.display = ''; btn.style.display = '';
-  c1.placeholder = tiene ? 'Tu contraseña' : 'Crea tu contraseña (mín. 4)';
+  c1.placeholder = tiene ? 'Tu contraseña' : 'Crea tu contraseña (mín. 8)';
   c2.style.display = tiene ? 'none' : '';
   hint.style.display = ''; hint.textContent = tiene
     ? 'Escribe tu contraseña para entrar.'
@@ -2052,7 +2052,7 @@ async function entrarConsejero(){
   try{
     if(primerAcceso){
       const clave2 = document.getElementById('claveCons2').value;
-      if(clave.length < 4) return mostrarAviso('La contraseña debe tener al menos 4 caracteres.');
+      if(clave.length < 8) return mostrarAviso('La contraseña debe tener al menos 8 caracteres.');
       if(clave !== clave2)  return mostrarAviso('Las contraseñas no coinciden.');
       const r = await fetch(API + '/consejero/registrar', {
         method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ consejero:id, clave })

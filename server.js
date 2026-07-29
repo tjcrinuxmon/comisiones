@@ -50,8 +50,8 @@ app.post('/api/consejero/estado', (req, res) => {
 });
 app.post('/api/consejero/registrar', (req, res) => {
   const { consejero, clave } = req.body || {};
-  if(!consejero || !clave || String(clave).length < 4)
-    return res.status(400).json({ error: 'Contraseña inválida (mínimo 4 caracteres).' });
+  if(!consejero || !clave || String(clave).length < 8)
+    return res.status(400).json({ error: 'Contraseña inválida (mínimo 8 caracteres).' });
   if(getClave(consejero))
     return res.status(409).json({ error: 'Ya tiene contraseña; inicie sesión.' });
   setClave(consejero, bcrypt.hashSync(String(clave), 10));

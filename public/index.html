@@ -333,6 +333,7 @@ dialog#reglas::backdrop{background:rgba(23,23,26,.55)}
   cursor:pointer;border:none;background:var(--ine);color:#fff}
 .portada-bloque button:hover{filter:brightness(.95)}
 .portada-bloque small{color:var(--tenue);font-size:11.5px}
+.portada-hint{margin:0;font-size:12px;color:var(--ine);font-weight:600}
 .portada-o{text-align:center;color:var(--tenue);font-size:12px;margin:6px 0}
 
 /* Identidad en la barra + salir */
@@ -356,8 +357,15 @@ body.rol-consejero tr:not(.fila-yo) td.celda .presi{display:none}
 
     <div class="portada-bloque">
       <label for="selConsejero">Soy consejera / consejero</label>
-      <select id="selConsejero"></select>
-      <button onclick="entrarConsejero()">Entrar y capturar mis intereses</button>
+      <select id="selConsejero" onchange="revisarConsejero()">
+        <option value="">— elige tu nombre —</option>
+      </select>
+      <input id="claveCons" type="password" placeholder="Contraseña" style="display:none"
+             onkeydown="if(event.key==='Enter')entrarConsejero()">
+      <input id="claveCons2" type="password" placeholder="Confirma tu contraseña" style="display:none"
+             onkeydown="if(event.key==='Enter')entrarConsejero()">
+      <p id="hintCons" class="portada-hint" style="display:none"></p>
+      <button id="btnCons" onclick="entrarConsejero()" style="display:none">Entrar</button>
       <small>Podrás ver lo que capturaron los demás, pero sólo editar tu propia fila.</small>
     </div>
 
@@ -393,6 +401,7 @@ body.rol-consejero tr:not(.fila-yo) td.celda .presi{display:none}
     <button id="btnLimpiarInt" class="peligro" onclick="limpiarIntereses()" style="display:none">Limpiar intereses</button>
     <button class="solo-admin" onclick="restaurarVigente()">Restaurar integración vigente</button>
     <button class="solo-admin" onclick="generarReporte()">Reporte imprimible</button>
+    <button class="solo-admin" onclick="verClaves()">Contraseñas</button>
     <button onclick="window.print()">Imprimir o guardar PDF</button>
     <button class="peligro solo-admin" onclick="limpiar()">Limpiar todo</button>
     <span id="quienSoy" class="quien-soy"></span>
@@ -578,6 +587,20 @@ body.rol-consejero tr:not(.fila-yo) td.celda .presi{display:none}
   <div class="reglas-cuerpo" id="resumenCuerpo"></div>
   <div class="reglas-pie">
     Esta expresión de intereses es una capa aparte: no modifica la integración real, la verificación ni el reporte.
+  </div>
+</dialog>
+
+<dialog id="claves">
+  <div class="reglas-head">
+    <div>
+      <h2>Contraseñas de consejeros</h2>
+      <p>Quién ya estableció contraseña · restablecer si la olvidó</p>
+    </div>
+    <button onclick="cerrarClaves()">Cerrar</button>
+  </div>
+  <div class="reglas-cuerpo" id="clavesCuerpo"></div>
+  <div class="reglas-pie">
+    Al restablecer, esa consejería creará una nueva contraseña la próxima vez que entre (primer acceso).
   </div>
 </dialog>
 
@@ -867,7 +890,9 @@ const PRELACION_VIGENTE = {
 const API = 'api';
 let rolActual   = null;      // 'consejero' | 'admin'
 let miConsejero = null;      // id de consejería cuando el rol es consejero
+let miToken     = '';        // token de sesión del consejero (identidad real)
 let adminPass   = '';        // clave de administrador cuando el rol es admin
+const LLAVE_SESION = 'comisiones-sesion';   // recuerda el token en este navegador
 let ultimaVersion = -1;      // control del sondeo
 let sincronizando = false;   // evita que el sondeo pise una escritura en curso
 const esAdminRol = () => rolActual === 'admin';
@@ -982,17 +1007,22 @@ async function guardar(incluirIntereses){
   }catch(e){ mostrarAviso('Error de red al guardar.'); }
   finally{ sincronizando = false; }
 }
-/* Un consejero (o el admin) captura interés/presidencia en una fila. */
+/* Un consejero (o el admin) captura interés/presidencia en una fila. La
+   identidad va por token (X-Token); si la sesión caducó, regresa a la portada. */
 async function enviarInteres(consejero, comision, opts){
   sincronizando = true;
   try{
     const r = await fetch(API + '/interes', {
       method:'POST',
-      headers:{ 'Content-Type':'application/json', 'X-Consejero': miConsejero || '', 'X-Admin': adminPass },
+      headers:{ 'Content-Type':'application/json', 'X-Token': miToken || '', 'X-Admin': adminPass },
       body: JSON.stringify(Object.assign({ consejero, comision }, opts))
     });
     const j = await r.json();
-    if(!r.ok){ mostrarAviso(j.error || 'No se pudo guardar.'); await cargarEstado(); pintar(); return false; }
+    if(!r.ok){
+      mostrarAviso(j.error || 'No se pudo guardar.');
+      if(r.status === 401 && !esAdminRol()){ salir(); return false; }   // sesión caducada
+      await cargarEstado(); pintar(); return false;
+    }
     if(j.version !== undefined) ultimaVersion = j.version;
     return true;
   }catch(e){ mostrarAviso('Error de red.'); return false; }
@@ -1794,6 +1824,41 @@ function cerrarResumen(){
   if(d.close) d.close(); else d.removeAttribute('open');
 }
 
+/* ---- Admin: contraseñas de consejeros (ver estado y restablecer) -------- */
+async function verClaves(){
+  let estado = {};
+  try{
+    const r = await fetch(API + '/consejeros', { headers:{ 'X-Admin': adminPass } });
+    if(r.ok) estado = await r.json();
+  }catch(e){ return mostrarAviso('Error de red.'); }
+  document.getElementById('clavesCuerpo').innerHTML = CONSEJERIAS.map(c => {
+    const tiene = !!estado[c.id];
+    return '<div class="regla" style="display:flex;align-items:center;justify-content:space-between;gap:10px">' +
+      '<span>' + c.nombre + ' <span class="' + (tiene ? 'aplica' : 'aplica no') + '">' +
+        (tiene ? 'con contraseña' : 'sin contraseña') + '</span></span>' +
+      (tiene ? '<button class="peligro" onclick="restablecerClave(\'' + c.id + '\',\'' +
+        c.nombre.replace(/'/g,"\\'") + '\')">Restablecer</button>' : '') +
+    '</div>';
+  }).join('');
+  const d = document.getElementById('claves');
+  if(d.showModal) d.showModal(); else d.setAttribute('open','');
+}
+async function restablecerClave(id, nombre){
+  if(!confirm('¿Restablecer la contraseña de ' + nombre + '? Deberá crear una nueva la próxima vez que entre.')) return;
+  try{
+    const r = await fetch(API + '/consejero/reset', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin': adminPass }, body: JSON.stringify({ consejero:id })
+    });
+    if(!r.ok) return mostrarAviso('No se pudo restablecer.');
+  }catch(e){ return mostrarAviso('Error de red.'); }
+  mostrarAviso('Contraseña de ' + nombre + ' restablecida.');
+  verClaves();
+}
+function cerrarClaves(){
+  const d = document.getElementById('claves');
+  if(d.close) d.close(); else d.removeAttribute('open');
+}
+
 /* Volcado: reemplaza la integración actual con los intereses expresados
    (las comisiones bloqueadas se conservan). Sólo procede si TODAS las
    comisiones modificables están en regla en intereses; cada una debe tener
@@ -1946,16 +2011,62 @@ function limpiar(){
   mostrarAviso('Matriz vacía; se conservó la integración bloqueada.');
 }
 
-/* ---- Portada de identidad (rol blando) --------------------------------- */
+/* ---- Portada de acceso (consejero con contraseña + admin) -------------- */
 function llenarPortada(){
   const sel = document.getElementById('selConsejero');
   sel.innerHTML = '<option value="">— elige tu nombre —</option>' +
     CONSEJERIAS.map(c => '<option value="' + c.id + '">' + c.nombre + '</option>').join('');
 }
+/* Al elegir consejero: consulta si ya tiene contraseña y ajusta el formulario
+   (login) o pide crearla (primer acceso). */
+let primerAcceso = false;
+async function revisarConsejero(){
+  const id = document.getElementById('selConsejero').value;
+  const c1 = document.getElementById('claveCons'), c2 = document.getElementById('claveCons2');
+  const hint = document.getElementById('hintCons'), btn = document.getElementById('btnCons');
+  c1.value = ''; c2.value = '';
+  if(!id){ [c1,c2,hint,btn].forEach(e => e.style.display = 'none'); return; }
+  let tiene = false;
+  try{
+    const r = await fetch(API + '/consejero/estado', {
+      method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ consejero:id })
+    });
+    tiene = (await r.json()).tienePassword;
+  }catch(e){ return mostrarAviso('Error de red.'); }
+  primerAcceso = !tiene;
+  c1.style.display = ''; btn.style.display = '';
+  c1.placeholder = tiene ? 'Tu contraseña' : 'Crea tu contraseña (mín. 4)';
+  c2.style.display = tiene ? 'none' : '';
+  hint.style.display = ''; hint.textContent = tiene
+    ? 'Escribe tu contraseña para entrar.'
+    : 'Primer acceso: crea tu contraseña. La necesitarás la próxima vez.';
+  btn.textContent = tiene ? 'Entrar' : 'Crear contraseña y entrar';
+  c1.focus();
+}
 async function entrarConsejero(){
   const id = document.getElementById('selConsejero').value;
   if(!id) return mostrarAviso('Elige tu nombre.');
-  rolActual = 'consejero'; miConsejero = id; adminPass = '';
+  const clave = document.getElementById('claveCons').value;
+  if(!clave) return mostrarAviso('Escribe tu contraseña.');
+  let j;
+  try{
+    if(primerAcceso){
+      const clave2 = document.getElementById('claveCons2').value;
+      if(clave.length < 4) return mostrarAviso('La contraseña debe tener al menos 4 caracteres.');
+      if(clave !== clave2)  return mostrarAviso('Las contraseñas no coinciden.');
+      const r = await fetch(API + '/consejero/registrar', {
+        method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ consejero:id, clave })
+      });
+      j = await r.json(); if(!r.ok) return mostrarAviso(j.error || 'No se pudo crear la contraseña.');
+    }else{
+      const r = await fetch(API + '/consejero/login', {
+        method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ consejero:id, clave })
+      });
+      j = await r.json(); if(!r.ok) return mostrarAviso(j.error || 'No se pudo entrar.');
+    }
+  }catch(e){ return mostrarAviso('Error de red.'); }
+  rolActual = 'consejero'; miConsejero = id; miToken = j.token; adminPass = '';
+  try{ localStorage.setItem(LLAVE_SESION, JSON.stringify({ token: miToken, consejero: id })); }catch(e){}
   await iniciarSesion();
 }
 async function entrarAdmin(){
@@ -1967,7 +2078,7 @@ async function entrarAdmin(){
     const j = await r.json();
     if(!j.ok) return mostrarAviso('Clave de administrador incorrecta.');
   }catch(e){ return mostrarAviso('Error de red.'); }
-  rolActual = 'admin'; miConsejero = null; adminPass = clave;
+  rolActual = 'admin'; miConsejero = null; miToken = ''; adminPass = clave;
   await iniciarSesion();
 }
 async function iniciarSesion(){
@@ -1981,15 +2092,34 @@ async function iniciarSesion(){
   document.getElementById('portada').style.display = 'none';
 }
 function salir(){
-  rolActual = null; miConsejero = null; adminPass = ''; ultimaVersion = -1;
+  rolActual = null; miConsejero = null; miToken = ''; adminPass = ''; ultimaVersion = -1;
+  try{ localStorage.removeItem(LLAVE_SESION); }catch(e){}
   document.getElementById('claveAdmin').value = '';
+  document.getElementById('selConsejero').value = '';
+  revisarConsejero();
   document.getElementById('portada').style.display = '';
+}
+/* Reanuda la sesión de consejero si el token guardado sigue siendo válido. */
+async function intentarReanudar(){
+  let g = null; try{ g = JSON.parse(localStorage.getItem(LLAVE_SESION)); }catch(e){}
+  if(!g || !g.token) return;
+  try{
+    const r = await fetch(API + '/consejero/sesion', {
+      method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ token: g.token })
+    });
+    const j = await r.json();
+    if(j.ok && j.consejero){
+      rolActual = 'consejero'; miConsejero = j.consejero; miToken = g.token;
+      await iniciarSesion();
+    }
+  }catch(e){}
 }
 
 /* ===================================================================== */
 construir();
 pintarSello();
 llenarPortada();
+intentarReanudar();
 setInterval(sondear, 3000);
 </script>
 </body>

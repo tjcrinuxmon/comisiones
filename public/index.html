@@ -454,8 +454,9 @@ body.rol-consejero tr:not(.fila-yo) td.celda .presi{display:none}
       <h3>Límite de participación <span class="art">Art. 42.2 LGIPE</span><span class="aplica">la matriz lo verifica</span></h3>
       <p>Las consejerías pueden participar hasta en cuatro comisiones <b>permanentes</b> por un periodo
       de tres años. Las comisiones temporales y otros órganos no cuentan para ese límite.</p>
-      <p><b>Excepción:</b> la Comisión de Verificación de Integridad en Candidaturas <b>no cuenta</b>
-      para ese tope; quien la integre puede llegar a cinco comisiones permanentes.</p>
+      <p>La Comisión de <b>Verificación de Integridad en Candidaturas</b> ya fue integrada (30/07/2026) y
+      <b>cuenta</b> para el tope: a partir de septiembre todas las consejerías tienen máximo cuatro
+      permanentes, por lo que quienes la integran sólo pueden ocupar tres más.</p>
     </div>
 
     <div class="regla">
@@ -638,7 +639,7 @@ const COMISIONES = [
   { id:'ople',          nombre:'Vinculación con OPLE',                      min:4, max:4, grupo:'permanente' },
   { id:'servicio',      nombre:'Servicio Profesional Electoral Nacional',   min:3, max:5, grupo:'permanente' },
   { id:'verificacion',  nombre:'Verificación de Integridad en Candidaturas',min:3, max:3, grupo:'permanente',
-                        comparacion:'no-comparable', noCuentaLimite:true, nota:'NUEVA · LGIPE reforma jun-2026' },
+                        comparacion:'no-comparable', bloqueada:true, nota:'INTEGRADA 30/07/2026 · ya no elegible' },
   /* --- Temporales (presididas siempre por una consejería; 3 a 5) --- */
   { id:'capyorg',       nombre:'Capacitación y Organización Electoral',     min:3, max:5, grupo:'temporal',
                         comparacion:'no-comparable' },
@@ -659,14 +660,14 @@ const COMISIONES = [
    valores de abajo, que corresponden al archivo original. Si alguien
    edita el catálogo, el sello del encabezado lo delata.
    ===================================================================== */
-const VERSION       = '1.6';
-const VERSION_FECHA = '28/07/2026';
+const VERSION       = '1.7';
+const VERSION_FECHA = '29/07/2026';
 
 const HUELLAS_ORIGINALES = {
   tope:        '310CA263B39B76CD',
   consejerias: '748C6D2AB1698C74',
-  comisiones:  '00F9EAECE8C866BA',
-  vigente:     'FAFC804D709FEB7B'
+  comisiones:  '622B51DBF962ADA5',
+  vigente:     '1512ECDD113B5BC3'
 };
 
 /* Huella FNV-1a de 64 bits en dos mitades. No es criptográfica: sirve
@@ -776,7 +777,8 @@ const INTEGRACION_VIGENTE = {
     { comision:'fiscalizacion', fecha:'2026-04-27' },
     { comision:'capacitacion',  fecha:'2026-04-27' },
     { comision:'prerrogativas', fecha:'2026-04-27' },
-    { comision:'presupuesto',   fecha:'2026-04-27' }
+    { comision:'presupuesto',   fecha:'2026-04-27' },
+    { comision:'verificacion',  fecha:'2026-07-30', presidencia:true }
   ],
   cruzg: [
     { comision:'organizacion',  fecha:'2026-04-27' },
@@ -794,7 +796,8 @@ const INTEGRACION_VIGENTE = {
     { comision:'voto',          fecha:'2026-04-27' },
     { comision:'transparencia', fecha:'2026-04-27' },
     { comision:'presupuesto',   fecha:'2026-04-27' },
-    { comision:'editorial',     fecha:'2026-04-27' }
+    { comision:'editorial',     fecha:'2026-04-27' },
+    { comision:'verificacion',  fecha:'2026-07-30' }
   ],
   espadas: [
     { comision:'fiscalizacion', fecha:'2020-07-30', presidencia:true },
@@ -803,7 +806,8 @@ const INTEGRACION_VIGENTE = {
     { comision:'servicio',      fecha:'2023-09-08' },
     { comision:'voto',          fecha:'2026-04-27' },
     { comision:'presupuesto',   fecha:'2026-04-27' },
-    { comision:'editorial',     fecha:'2026-04-27' }
+    { comision:'editorial',     fecha:'2026-04-27' },
+    { comision:'verificacion',  fecha:'2026-07-30' }
   ],
   faz: [
     { comision:'organizacion',  fecha:'2023-09-08', presidencia:true },
@@ -914,7 +918,7 @@ function sembrarBloqueadas(){
    integración vigente (Seguimiento PEL y Presupuesto —bloqueadas— y el Comité
    Editorial). Si una no está cargada en intereses, se siembra desde la
    integración vigente (miembros y, si la hay, la presidencia). */
-const INTERES_FIJAS = ['seguimiento', 'presupuesto', 'editorial'];
+const INTERES_FIJAS = ['seguimiento', 'presupuesto', 'editorial', 'verificacion'];
 function cargarInteresesFijas(){
   INTERES_FIJAS.forEach(idK => {
     if(CONSEJERIAS.some(c => interesPuesto(c.id, idK))) return;   // ya cargada, no la duplico
@@ -1012,7 +1016,7 @@ const porComision   = k => CONSEJERIAS.filter(c => estaPuesta(c.id, k.id)).lengt
 
 const esPermanente  = k => k.grupo === 'permanente';
 const esModificable = k => !k.bloqueada;                       // las bloqueadas no se editan ni se verifican
-const cuentaLimite  = k => esPermanente(k) && !k.noCuentaLimite;   // Verificación no cuenta (excepción)
+const cuentaLimite  = k => esPermanente(k) && !k.noCuentaLimite;   // todas las permanentes cuentan (máx. 4)
 /* El límite de 4 por consejería sólo cuenta las permanentes que sí cuentan
    (todas salvo Verificación de Integridad). Quien integre Verificación puede
    llegar a 5, como excepción. */
@@ -1369,8 +1373,8 @@ function pintarIntereses(){
     celdaTotal.textContent = total;
     celdaTotal.classList.remove('lleno');
     celdaTotal.classList.toggle('excedido', permInt > MAX_POR_CONSEJERIA);
-    celdaTotal.title = c.nombre + ' — ' + total + ' intereses · ' + permInt + ' permanentes que cuentan (máx ' +
-                       MAX_POR_CONSEJERIA + '; Verificación no cuenta)';
+    celdaTotal.title = c.nombre + ' — ' + total + ' intereses · ' + permInt + ' permanentes (máx ' +
+                       MAX_POR_CONSEJERIA + ')';
   });
 
   let enRegla = 0;
@@ -1488,8 +1492,8 @@ function pintar(){
     celdaTotal.textContent = permTotal;
     celdaTotal.classList.toggle('lleno', permTotal === MAX_POR_CONSEJERIA);
     celdaTotal.classList.toggle('excedido', permTotal > MAX_POR_CONSEJERIA);
-    celdaTotal.title = 'Permanentes que cuentan: ' + permTotal + ' de ' + MAX_POR_CONSEJERIA +
-                       ' (Verificación no cuenta) · participaciones totales: ' + total;
+    celdaTotal.title = 'Comisiones permanentes: ' + permTotal + ' de ' + MAX_POR_CONSEJERIA +
+                       ' · participaciones totales: ' + total;
   });
 
   let enRegla = 0, modificables = 0;
@@ -1563,7 +1567,7 @@ function alternar(idC, idK){
     delete marcas[clave(idC, idK)];
   }else{
     if(cuentaLimite(k) && porConsejeriaPermanentes(c) >= MAX_POR_CONSEJERIA)
-      return mostrarAviso(c.nombre + ' ya participa en ' + MAX_POR_CONSEJERIA + ' comisiones permanentes (Verificación no cuenta).');
+      return mostrarAviso(c.nombre + ' ya participa en ' + MAX_POR_CONSEJERIA + ' comisiones permanentes.');
     if(porComision(k) >= k.max)
       return mostrarAviso(k.nombre + ' admite ' + k.max + ' integrantes y ya los tiene.');
 
@@ -1596,7 +1600,7 @@ function alternar(idC, idK){
 }
 
 /* Expresión de intereses (modo aparte): marca/desmarca interés como integrante.
-   Aplica el límite de 4 comisiones que cuentan (Verificación no cuenta); lo
+   Aplica el límite de 4 comisiones permanentes; lo
    único que NO se aplica aquí es el tope de 3/5 integrantes por comisión (ese
    sólo advierte). No toca 'marcas' ni la integración real. */
 function alternarInteres(idC, idK){
@@ -1612,7 +1616,7 @@ function alternarInteres(idC, idK){
   }else{
     if(cuentaLimite(k) && porConsejeriaPermanentesInteres(c) >= MAX_POR_CONSEJERIA)
       return mostrarAviso(c.nombre + ' ya expresó interés en ' + MAX_POR_CONSEJERIA +
-        ' comisiones permanentes (Verificación de Integridad no cuenta).');
+        ' comisiones permanentes (máximo 4).');
     intereses[key] = {};   // objeto: presencia = integrante
   }
   pintar();                                  // optimista
@@ -1779,7 +1783,7 @@ function verResumenIntereses(){
   document.getElementById('resumenCuerpo').innerHTML =
     '<p style="margin:0 0 12px;font-size:13px;color:#42464f">' + enRegla + ' de ' + COMISIONES.length +
     ' comisiones cumplirían todas las reglas con los intereses actuales' +
-    (rebasan.length ? '. Rebasan el límite de ' + MAX_POR_CONSEJERIA + ' permanentes (Verificación no cuenta): <b>' +
+    (rebasan.length ? '. Rebasan el límite de ' + MAX_POR_CONSEJERIA + ' permanentes: <b>' +
       rebasan.map(c => c.nombre).join(', ') + '</b>' : '') +
     '. El número es cuántas la quieren frente a su cupo; el tope sólo advierte. No modifica la integración real.</p>' + filas;
   const d = document.getElementById('resumen');

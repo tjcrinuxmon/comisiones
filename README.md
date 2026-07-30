@@ -1,65 +1,144 @@
 # Matriz de Comisiones — captura compartida (multiusuario)
 
-App web (Express + SQLite) para que **varios consejeros capturen en vivo** sus
-intereses de integración de comisiones, y un **administrador** maneje toda la
-integración. Mismo método que `diligencias`/`tareas`: Node + SQLite + PM2 detrás
-de nginx.
+App web para que **cada consejería capture en vivo** sus intereses de integración
+de comisiones y un **administrador** maneje toda la integración.
 
-- **Modelo blando:** cada consejero elige su nombre (sin login) y sólo edita su
-  propia fila; el administrador entra con una clave y desbloquea todo.
-- **En vivo:** el frontend sondea el servidor cada ~3 s (`/api/version`) y
-  recarga el estado cuando cambió.
-- **Estado compartido** en `comisiones.sqlite` (tabla `estado`, JSON por clave).
+- **Stack:** Node.js + Express + SQLite (`better-sqlite3`) + PM2, detrás de **nginx**.
+- **Sin base externa:** el estado compartido vive en un archivo `comisiones.sqlite`
+  que se crea solo. No requiere MySQL/Postgres ni servicios adicionales.
+- **En vivo:** el navegador sondea `/api/version` cada ~3 s y recarga si cambió.
 
-## Puesta en marcha (local o servidor)
+## Acceso
+- **Consejero:** elige su nombre y **establece su propia contraseña** la primera
+  vez (bcrypt, mínimo 8, **sin correos**); después inicia sesión. La identidad va
+  por token: **sólo ve y edita su propia fila**.
+- **Administrador:** entra con la clave `ADMIN_PASS` (definida en `.env`), ve y
+  gestiona todo, y puede **restablecer** contraseñas de consejeros.
 
+---
+
+# Despliegue desde cero (servidor nuevo) con dominio y HTTPS
+
+Guía para **Infraestructura**. Asume **Ubuntu/Debian** con acceso `root`/sudo.
+Sustituye `comisiones.tudominio.mx` por el dominio real y `usuario` por la ruta
+donde alojarán la app.
+
+**Recursos mínimos:** 1 vCPU y 1 GB RAM (app ligera con SQLite).
+
+### 1. DNS
+Crear un registro **A** (o CNAME) que apunte `comisiones.tudominio.mx` a la **IP
+pública** del servidor. Debe resolver antes de emitir el certificado del paso 6.
+
+### 2. Paquetes base + Node.js 20 LTS
 ```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y git build-essential python3
+
+# Node.js 20 LTS (requerido por better-sqlite3 ^12)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+node -v && npm -v            # verificar (node debe ser v20+)
+
+# PM2 (gestor de procesos)
+sudo npm install -g pm2
+```
+
+### 3. Bajar el código del repositorio
+```bash
+cd /home/usuario
+git clone https://github.com/tjcrinuxmon/comisiones.git comisiones-web
 cd comisiones-web
-npm install
-cp .env.example .env      # ajusta PORT y ADMIN_PASS (¡cambia la clave!)
-npm start                 # o: pm2 start server.js --name comisiones
+npm install                  # DEBE correr en el servidor (better-sqlite3 es nativo)
 ```
+> Si el repo es **privado**, Infra necesita acceso: colaborador en GitHub, repo
+> público, o un *deploy key* de solo lectura.
 
-Abre `http://localhost:3006`.
-
-## Publicar por IP pública SIN dominio (nginx)
-
-Ya tienes nginx en 80/443. Agrega un `location` en tu `server` que escucha en la
-IP (o crea uno) para exponer la app en una subruta. El frontend usa **rutas
-relativas**, así que funciona bajo `/comisiones/`:
-
-```nginx
-# dentro del bloque: server { listen 80 default_server; ... }
-location /comisiones/ {
-    proxy_pass http://127.0.0.1:3006/;   # la barra final quita el prefijo
-    proxy_http_version 1.1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-}
-```
-
-Recarga nginx (`sudo nginx -t && sudo systemctl reload nginx`) y entra a
-`http://TU_IP_PUBLICA/comisiones/`. Repartes esa URL a los consejeros.
-
-- No necesitas dominio ni certificado; el puerto 3006 queda **solo interno**
-  (nginx es el único expuesto).
-- Alternativa rápida (sin nginx): abre el puerto 3006 en el firewall y entra a
-  `http://TU_IP:3006` — funciona, pero queda en HTTP plano y con el puerto
-  expuesto; se recomienda la vía nginx.
-
-## Despliegue continuo (PM2 + git)
-
+### 4. Configuración (`.env`)
 ```bash
-pm2 start server.js --name comisiones      # primera vez
+cp .env.example .env
+nano .env
+```
+```
+PORT=3006
+ADMIN_PASS=clave-fuerte-del-administrador
+```
+> El `.env` **no** está en git: hay que crearlo en cada servidor. El puerto 3006
+> queda **solo interno** (nginx hace el proxy); no se abre al exterior.
+
+### 5. Arrancar con PM2 (persistente)
+```bash
+pm2 start server.js --name comisiones
 pm2 save
-./deploy.sh                                 # siguientes: git pull + restart
+pm2 startup                  # ejecutar la línea que imprima (arranque tras reboot)
+
+pm2 list
+curl -sI http://localhost:3006/api/estado | head -1   # esperado: HTTP/1.1 200 OK
+```
+
+### 6. nginx (reverse proxy) + HTTPS (Let's Encrypt)
+```bash
+sudo apt install -y nginx
+
+sudo tee /etc/nginx/sites-available/comisiones >/dev/null <<'EOF'
+server {
+    listen 80;
+    server_name comisiones.tudominio.mx;
+
+    location / {
+        proxy_pass http://127.0.0.1:3006/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+EOF
+
+sudo ln -sf /etc/nginx/sites-available/comisiones /etc/nginx/sites-enabled/comisiones
+sudo nginx -t && sudo systemctl reload nginx
+
+# Certificado HTTPS (configura nginx y renovación automática)
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d comisiones.tudominio.mx
+```
+Certbot agrega el bloque `listen 443 ssl`, redirige 80→443 y programa la
+renovación. Al terminar, la app queda en **`https://comisiones.tudominio.mx`**.
+
+### 7. Firewall
+```bash
+sudo ufw allow OpenSSH
+sudo ufw allow 'Nginx Full'   # 80 y 443
+sudo ufw enable
+# El puerto 3006 NO se abre: sólo lo usa nginx internamente.
+```
+
+### 8. Primer uso
+Entrar a `https://comisiones.tudominio.mx` como **administrador** (con
+`ADMIN_PASS`): esto **siembra** la integración vigente y las comisiones fijas.
+Luego repartir la URL a los consejeros para que creen su contraseña.
+
+---
+
+## Actualizaciones
+```bash
+cd /home/usuario/comisiones-web
+git pull            # o: ./deploy.sh  (hace npm ci si cambió package.json y reinicia)
+pm2 restart comisiones
+```
+Ejecutar `npm install` sólo cuando cambien dependencias (`deploy.sh` lo detecta
+solo). El `.env` y `comisiones.sqlite` no se sobrescriben.
+
+## Respaldos
+La base es un solo archivo. Respaldar periódicamente:
+```bash
+cp /home/usuario/comisiones-web/comisiones.sqlite ~/respaldo-comisiones-$(date +%F).sqlite
 ```
 
 ## Notas
-
-- `ADMIN_PASS` en `.env` es la clave del administrador (barrera de interfaz, no
-  seguridad fuerte: es un sistema interno de confianza).
-- La base `comisiones.sqlite` y `.env` están protegidas en `deploy.sh` (no se
-  sobrescriben al actualizar).
-- El catálogo (comisiones/consejerías/integración vigente) vive en el frontend
-  (`public/index.html`); la base sólo guarda el estado que se captura.
+- **Datos:** todo el estado capturado vive en `comisiones.sqlite` (creado solo,
+  ignorado por git). El catálogo (comisiones/consejerías/integración vigente)
+  vive en el frontend `public/index.html`.
+- **Seguridad:** `ADMIN_PASS` y las contraseñas de consejeros (bcrypt) protegen el
+  acceso; con HTTPS el tráfico va cifrado. Es un sistema interno.
+- **Otros SO:** en RHEL/Alma usar `dnf` y el instalador `rpm` de NodeSource.

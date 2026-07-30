@@ -948,6 +948,7 @@ function sembrarBloqueadas(){
    Editorial). Si una no está cargada en intereses, se siembra desde la
    integración vigente (miembros y, si la hay, la presidencia). */
 const INTERES_FIJAS = ['seguimiento', 'presupuesto', 'editorial', 'verificacion'];
+const esFija = k => INTERES_FIJAS.includes(k.id);       // comisiones que no cambian (no editables)
 function cargarInteresesFijas(){
   INTERES_FIJAS.forEach(idK => {
     if(CONSEJERIAS.some(c => interesPuesto(c.id, idK))) return;   // ya cargada, no la duplico
@@ -955,6 +956,16 @@ function cargarInteresesFijas(){
       const a = INTEGRACION_VIGENTE[idC].find(x => x.comision === idK);
       if(a) intereses[clave(idC, idK)] = a.presidencia ? { p: true } : {};
     });
+  });
+}
+/* Para un consejero: muestra SIEMPRE su propia membresía en las comisiones que
+   no cambian (fijas), tomada del catálogo, aunque el estado compartido no las
+   traiga. Sólo lo suyo (privacidad). No editable. */
+function mostrarMisFijas(){
+  if(esAdminRol() || !miConsejero) return;
+  INTERES_FIJAS.forEach(idK => {
+    const a = (INTEGRACION_VIGENTE[miConsejero] || []).find(x => x.comision === idK);
+    if(a) intereses[clave(miConsejero, idK)] = a.presidencia ? { p: true } : {};
   });
 }
 
@@ -984,6 +995,7 @@ function aplicarEstado(s){
   intereses   = s.intereses   || {};
   ultimaVersion = s.version || 0;
   saneaEstado();
+  mostrarMisFijas();                 // el consejero ve su membresía en las fijas
 }
 /* Trae el estado compartido del servidor. */
 async function cargarEstado(){
@@ -1389,19 +1401,19 @@ function pintarIntereses(){
         cp.textContent = ''; cp.className = 'presi'; cp.title = '';
       }else if(marcado && proponePresi(c.id, k.id)){
         cp.textContent = 'Presidencia (prop.)'; cp.className = 'presi puesta';
-        cp.title = k.bloqueada ? 'Presidencia (integración fija)' : 'Quitar la propuesta de presidencia de ' + c.nombre;
-      }else if(marcado && !k.bloqueada){
+        cp.title = esFija(k) ? 'Presidencia (integración fija)' : 'Quitar la propuesta de presidencia de ' + c.nombre;
+      }else if(marcado && !esFija(k)){
         cp.textContent = '+ presidencia'; cp.className = 'presi disponible';
         cp.title = 'Proponer a ' + c.nombre + ' a la presidencia (pueden ser varias)';
       }else{
         cp.textContent = ''; cp.className = 'presi'; cp.title = '';
       }
       td.classList.remove('bloqueada');
-      td.classList.toggle('candado', !!k.bloqueada);        // las fijas (Seguimiento/Presupuesto) no se editan
+      td.classList.toggle('candado', esFija(k));            // las fijas (no cambian) no se editan
       td.classList.toggle('interes', marcado);
       td.setAttribute('aria-checked', marcado ? 'true' : 'false');
-      td.title = k.bloqueada
-               ? k.nombre + ' — integración fija (no cambia por ahora)'
+      td.title = esFija(k)
+               ? k.nombre + ' — integración fija (no cambia)'
                : (marcado ? 'Quitar el interés de ' : 'Marcar interés de ') + c.nombre + ' en ' + k.nombre;
     });
     const permInt = porConsejeriaPermanentesInteres(c);
@@ -1651,7 +1663,7 @@ function alternar(idC, idK){
 function alternarInteres(idC, idK){
   const c = CONSEJERIAS.find(x => x.id === idC);
   const k = COMISIONES.find(x => x.id === idK);
-  if(k.bloqueada) return mostrarAviso(k.nombre + ' es inmutable; no aplica expresar interés.');
+  if(esFija(k)) return mostrarAviso(k.nombre + ' ya está integrada y no cambia.');
   if(!esAdminRol() && idC !== miConsejero)
     return mostrarAviso('Sólo puede capturar en su propia fila.');
   const key = clave(idC, idK);
@@ -1673,7 +1685,7 @@ function alternarInteres(idC, idK){
 function proponerPresidencia(idC, idK){
   const c = CONSEJERIAS.find(x => x.id === idC);
   const k = COMISIONES.find(x => x.id === idK);
-  if(k.bloqueada) return mostrarAviso(k.nombre + ' es inmutable.');
+  if(esFija(k)) return mostrarAviso(k.nombre + ' ya está integrada y no cambia.');
   if(!esAdminRol() && idC !== miConsejero)
     return mostrarAviso('Sólo puede capturar en su propia fila.');
   const reg = intereses[clave(idC, idK)];

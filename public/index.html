@@ -947,8 +947,11 @@ function sembrarBloqueadas(){
    integración vigente (Seguimiento PEL y Presupuesto —bloqueadas— y el Comité
    Editorial). Si una no está cargada en intereses, se siembra desde la
    integración vigente (miembros y, si la hay, la presidencia). */
-const INTERES_FIJAS = ['seguimiento', 'presupuesto', 'editorial', 'verificacion'];
-const esFija = k => INTERES_FIJAS.includes(k.id);       // comisiones que no cambian (no editables)
+/* Fijas = comisiones que NO cambian (bloqueadas, no editables). El Comité
+   Editorial NO es fija: se puede elegir/cambiar; su presidencia es automática
+   (quien presida Capacitación) y el segundo lugar es libre. */
+const INTERES_FIJAS = ['seguimiento', 'presupuesto', 'verificacion'];
+const esFija = k => INTERES_FIJAS.includes(k.id);
 function cargarInteresesFijas(){
   INTERES_FIJAS.forEach(idK => {
     Object.keys(INTEGRACION_VIGENTE).forEach(idC => {
@@ -1686,6 +1689,7 @@ function proponerPresidencia(idC, idK){
   const c = CONSEJERIAS.find(x => x.id === idC);
   const k = COMISIONES.find(x => x.id === idK);
   if(esFija(k)) return mostrarAviso(k.nombre + ' ya está integrada y no cambia.');
+  if(k.autoPresi) return mostrarAviso('El Comité Editorial lo preside automáticamente quien presida Capacitación Electoral.');
   if(!esAdminRol() && idC !== miConsejero)
     return mostrarAviso('Sólo puede capturar en su propia fila.');
   const reg = intereses[clave(idC, idK)];

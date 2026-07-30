@@ -50,8 +50,6 @@ git clone https://github.com/tjcrinuxmon/comisiones.git comisiones-web
 cd comisiones-web
 npm install                  # DEBE correr en el servidor (better-sqlite3 es nativo)
 ```
-> Si el repo es **privado**, Infra necesita acceso: colaborador en GitHub, repo
-> público, o un *deploy key* de solo lectura.
 
 ### 4. Configuración (`.env`)
 ```bash

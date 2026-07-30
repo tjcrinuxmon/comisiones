@@ -951,10 +951,10 @@ const INTERES_FIJAS = ['seguimiento', 'presupuesto', 'editorial', 'verificacion'
 const esFija = k => INTERES_FIJAS.includes(k.id);       // comisiones que no cambian (no editables)
 function cargarInteresesFijas(){
   INTERES_FIJAS.forEach(idK => {
-    if(CONSEJERIAS.some(c => interesPuesto(c.id, idK))) return;   // ya cargada, no la duplico
     Object.keys(INTEGRACION_VIGENTE).forEach(idC => {
       const a = INTEGRACION_VIGENTE[idC].find(x => x.comision === idK);
-      if(a) intereses[clave(idC, idK)] = a.presidencia ? { p: true } : {};
+      if(a && intereses[clave(idC, idK)] === undefined)          // agrega sólo lo que falte
+        intereses[clave(idC, idK)] = a.presidencia ? { p: true } : {};
     });
   });
 }
@@ -2110,9 +2110,14 @@ async function entrarAdmin(){
 }
 async function iniciarSesion(){
   await cargarEstado();
-  /* Inicializa el estado compartido la primera vez (sólo admin, si está vacío). */
-  if(esAdminRol() && Object.keys(marcas).length === 0 && Object.keys(intereses).length === 0){
-    sembrar(); cargarInteresesFijas(); await guardar(true);
+  /* Admin: siembra la integración la primera vez y SIEMPRE asegura que las
+     comisiones fijas estén presentes (agrega las que falten sin pisar capturas). */
+  if(esAdminRol()){
+    const vacio = Object.keys(marcas).length === 0 && Object.keys(intereses).length === 0;
+    const antes = JSON.stringify(intereses);
+    if(vacio) sembrar();
+    cargarInteresesFijas();
+    if(vacio || JSON.stringify(intereses) !== antes) await guardar(true);
   }
   aplicarRol();
   pintar();

@@ -1,8 +1,8 @@
 # Manual de uso — Consejeras y Consejeros
 
 Sistema para **expresar tus intereses** de integración de comisiones. Aquí solo
-capturas **lo tuyo**; el administrador arma la integración final con base en lo
-que todas y todos expresen.
+capturas **lo tuyo**; quien administra el sistema arma la integración final con
+base en lo que todas y todos expresen.
 
 ---
 
@@ -16,8 +16,8 @@ que todas y todos expresen.
    - Esa contraseña es **personal**: la usarás las próximas veces.
 4. **Las siguientes veces:** elige tu nombre, escribe tu contraseña y pulsa **"Entrar"**.
 
-> **¿Olvidaste tu contraseña?** Pídele al **administrador** que la restablezca;
-> después podrás crear una nueva al entrar.
+> **¿Olvidaste tu contraseña?** Solicita a **quien administra el sistema** que la
+> restablezca; después podrás crear una nueva al entrar.
 
 ---
 
@@ -85,8 +85,8 @@ pueden editar). Si ya formas parte de alguna, la verás en tu fila. Por ejemplo,
 
 ## Preguntas frecuentes
 
-- **¿Por qué no veo lo que marcaron los demás?** Por privacidad: cada quien ve
-  solo su propia fila. El administrador es quien ve el panorama completo.
+- **¿Por qué no veo lo que marcaron las demás personas?** Por privacidad: cada
+  quien ve solo su propia fila. Quien administra el sistema ve el panorama completo.
 - **¿Puedo cambiar mis marcas después?** Sí, mientras el ejercicio siga abierto:
   entra y ajusta tu fila.
 - **¿Qué pasa si marco más de lo permitido?** El sistema te avisa y no te deja

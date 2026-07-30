@@ -33,10 +33,18 @@ const nuevoToken = () => crypto.randomBytes(24).toString('hex');
 
 /* ---- Estado compartido (carga inicial y sondeo) ---- */
 app.get('/api/estado', (req, res) => {
+  let intereses = get('intereses') || {};
+  if(!esAdmin(req)){
+    /* Un consejero SÓLO recibe sus propios intereses (no ve los de los demás). */
+    const soy = getSesion(req.header('X-Token') || '');
+    const propio = {};
+    if(soy) Object.keys(intereses).forEach(k => { if(k.split('|')[0] === soy) propio[k] = intereses[k]; });
+    intereses = propio;
+  }
   res.json({
     version:     get('version') || 0,
     marcas:      get('marcas') || {},
-    intereses:   get('intereses') || {},
+    intereses:   intereses,
     prelacion:   get('prelacion') || {},
     verificadas: get('verificadas') || {}
   });

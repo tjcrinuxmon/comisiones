@@ -346,6 +346,10 @@ tr.fila-yo{background:#fff7fb}
 body.rol-consejero.modo-intereses td.celda{cursor:default}
 body.rol-consejero.modo-intereses tr.fila-yo td.celda{cursor:pointer}
 body.rol-consejero tr:not(.fila-yo) td.celda .presi{display:none}
+/* Privacidad: un consejero sólo ve su propia fila; se ocultan las demás y el
+   pie de totales (que revelaría la captura de los demás). */
+body.rol-consejero tbody tr[data-consejeria]:not(.fila-yo){display:none}
+body.rol-consejero tfoot{display:none}
 </style>
 </head>
 <body>
@@ -983,7 +987,9 @@ function aplicarEstado(s){
 }
 /* Trae el estado compartido del servidor. */
 async function cargarEstado(){
-  const r = await fetch(API + '/estado');
+  const r = await fetch(API + '/estado', {
+    headers: { 'X-Token': miToken || '', 'X-Admin': adminPass || '' }
+  });
   aplicarEstado(await r.json());
 }
 /* El administrador escribe el estado de integración (marcas/verificadas/
@@ -1423,11 +1429,20 @@ function pintarIntereses(){
       '<span class="sello ' + clase + '" title="' + titulo + '">' + texto + '</span>';
   });
 
+  const marcador = document.getElementById('marcador');
+  marcador.className = 'marcador intereses';
+  if(!esAdminRol()){
+    /* El consejero sólo ve lo suyo: no se muestran agregados de los demás. */
+    const mias = COMISIONES.filter(k => interesPuesto(miConsejero, k.id)).length;
+    marcador.textContent = 'Captura de tus intereses';
+    document.getElementById('detalle').textContent =
+      'Marca las comisiones que te interesan (máximo ' + MAX_POR_CONSEJERIA + ' permanentes). ' +
+      'Sólo ves y editas tu fila. Has marcado ' + mias + '.';
+    return;
+  }
   const totalInt = CONSEJERIAS.reduce((s,c) => s + COMISIONES.filter(k => interesPuesto(c.id, k.id)).length, 0);
   const participan = CONSEJERIAS.filter(c => COMISIONES.some(k => interesPuesto(c.id, k.id))).length;
   const rebasan = CONSEJERIAS.filter(c => porConsejeriaPermanentesInteres(c) > MAX_POR_CONSEJERIA).length;
-  const marcador = document.getElementById('marcador');
-  marcador.className = 'marcador intereses';
   marcador.textContent = 'Expresión de intereses · ' + enRegla + ' de ' + COMISIONES.length + ' comisiones en regla';
   document.getElementById('detalle').textContent =
     totalInt + ' intereses de ' + participan + ' consejerías · el tope de integrantes sólo advierte' +
@@ -1753,7 +1768,7 @@ function aplicarModoUI(){
   document.body.classList.toggle('modo-intereses', enInt);
   document.getElementById('btnModo').style.display       = admin ? '' : 'none';
   document.getElementById('btnModo').textContent = enInt ? 'Volver a integración' : 'Expresar intereses';
-  document.getElementById('btnResumen').style.display    = enInt ? '' : 'none';
+  document.getElementById('btnResumen').style.display    = (enInt && admin) ? '' : 'none';
   document.getElementById('btnVolcar').style.display     = (enInt && admin) ? '' : 'none';
   document.getElementById('btnLimpiarInt').style.display = (enInt && admin) ? '' : 'none';
 }

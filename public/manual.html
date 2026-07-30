@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual del consejero · Matriz de Comisiones</title>
+<style>
+  :root{ --ine:#d5007f; --tinta:#17171a; --tenue:#6b6f7a; --linea:#e4e5ea; --suave:#fdf2f8; }
+  *{ box-sizing:border-box; }
+  body{
+    font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--tinta); line-height:1.55; margin:0; background:#f3f4f6;
+  }
+  .hoja{
+    max-width:820px; margin:24px auto; background:#fff; padding:40px 48px;
+    box-shadow:0 2px 12px rgba(0,0,0,.08); border-radius:8px;
+  }
+  header{ border-bottom:3px solid var(--ine); padding-bottom:14px; margin-bottom:22px; }
+  h1{ font-size:22px; margin:0 0 4px; }
+  header p{ margin:0; color:var(--tenue); font-size:13.5px; }
+  h2{
+    font-size:16px; margin:26px 0 8px; color:var(--ine);
+    border-bottom:1px solid var(--linea); padding-bottom:5px;
+  }
+  p, li{ font-size:14px; }
+  ol, ul{ padding-left:22px; margin:8px 0; }
+  li{ margin-bottom:5px; }
+  .nota{
+    background:var(--suave); border-left:4px solid var(--ine);
+    padding:10px 14px; border-radius:6px; font-size:13.5px; margin:12px 0;
+  }
+  .paso{ font-weight:600; }
+  code{ background:#eef0f3; padding:1px 5px; border-radius:4px; font-size:13px; }
+  .barra{ text-align:center; margin:20px 0; }
+  .barra button{
+    font:inherit; font-size:14px; font-weight:600; cursor:pointer;
+    background:var(--ine); color:#fff; border:none; padding:10px 22px; border-radius:8px;
+  }
+  footer{ margin-top:28px; border-top:1px solid var(--linea); padding-top:12px; color:var(--tenue); font-size:12px; }
+
+  @media print{
+    body{ background:#fff; }
+    .hoja{ box-shadow:none; margin:0; max-width:none; padding:0; border-radius:0; }
+    .barra{ display:none; }
+    h2{ break-after:avoid; }
+    .nota, ol, ul{ break-inside:avoid; }
+    @page{ margin:18mm; }
+  }
+</style>
+</head>
+<body>
+<div class="hoja">
+
+  <div class="barra"><button onclick="window.print()">🖨️ Imprimir o guardar PDF</button></div>
+
+  <header>
+    <h1>Manual de uso — Consejeras y Consejeros</h1>
+    <p>Sistema de captura de intereses · Integración de Comisiones · INE</p>
+  </header>
+
+  <p>Este sistema sirve para <strong>expresar tus intereses</strong> de integración de
+  comisiones. Aquí solo capturas <strong>lo tuyo</strong>; el administrador arma la
+  integración final con base en lo que todas y todos expresen.</p>
+
+  <h2>1. Entrar al sistema</h2>
+  <ol>
+    <li>Abre la dirección que te compartieron (por ejemplo, <code>https://comisiones.tudominio.mx</code>).</li>
+    <li>En <strong>“Soy consejera / consejero”</strong>, elige <strong>tu nombre</strong> en la lista.</li>
+    <li><span class="paso">La primera vez</span> te pedirá <strong>crear tu contraseña</strong>:
+      escríbela (mínimo <strong>8 caracteres</strong>), <strong>confírmala</strong> y pulsa
+      <strong>“Crear contraseña y entrar”</strong>. Es <strong>personal</strong>; la usarás las próximas veces.</li>
+    <li><span class="paso">Las siguientes veces:</span> elige tu nombre, escribe tu contraseña y pulsa <strong>“Entrar”</strong>.</li>
+  </ol>
+  <div class="nota"><strong>¿Olvidaste tu contraseña?</strong> Pídele al <strong>administrador</strong> que la
+  restablezca; después podrás crear una nueva al entrar.</div>
+
+  <h2>2. Qué verás</h2>
+  <ul>
+    <li>Una tabla con las <strong>comisiones</strong> (en columnas) y <strong>tu fila</strong> (con tu nombre).</li>
+    <li><strong>Solo ves y editas tu propia fila.</strong> Lo que capturan las demás consejerías es privado;
+      es normal que no lo veas.</li>
+    <li>Arriba se indica <strong>“Captura de tus intereses”</strong> y cuántas llevas marcadas.</li>
+  </ul>
+
+  <h2>3. Marcar las comisiones que te interesan</h2>
+  <ul>
+    <li><strong>Haz clic en la casilla</strong> de la comisión que te interese (en tu fila): se marca con una palomita.</li>
+    <li>Para <strong>quitar</strong> el interés, vuelve a hacer clic.</li>
+    <li><strong>Límite:</strong> puedes marcar hasta <strong>4 comisiones permanentes</strong>. Al llegar a 4,
+      el sistema no te deja marcar una quinta y te avisa.</li>
+    <li>Las <strong>comisiones temporales</strong> y <strong>otros órganos</strong> no cuentan para ese límite.</li>
+  </ul>
+  <div class="nota"><strong>Se guarda solo.</strong> Todo se registra en el momento; no hay botón de “guardar”.</div>
+
+  <h2>4. Proponerte a una presidencia (opcional)</h2>
+  <ul>
+    <li>En una comisión que <strong>ya marcaste</strong>, aparece debajo la opción <strong>“+ presidencia”</strong>.
+      Haz clic si quieres <strong>proponerte</strong> para presidirla.</li>
+    <li>Para retirar la propuesta, haz clic en <strong>“Presidencia (prop.)”</strong>.</li>
+    <li><strong>Pueden proponerse varias personas</strong> a la misma presidencia; se define en el <strong>debate</strong>.</li>
+  </ul>
+
+  <h2>5. Comité Editorial (caso especial)</h2>
+  <ul>
+    <li>El Comité Editorial lo <strong>preside automáticamente</strong> quien presida la Comisión de
+      <strong>Capacitación Electoral y Educación Cívica</strong>.</li>
+    <li>Por eso, <strong>si te propones a la presidencia de Capacitación</strong>, aparecerás
+      <strong>automáticamente</strong> como presidencia del Comité Editorial (no tienes que marcarlo aparte).</li>
+    <li>La <strong>otra plaza</strong> del Comité es libre: <strong>cualquier consejería</strong> puede marcar
+      su interés en el Comité para ocuparla.</li>
+  </ul>
+
+  <h2>6. Comisiones que ya están integradas (con candado)</h2>
+  <p>Algunas comisiones <strong>ya no cambian</strong> y aparecen con un <strong>candado</strong> (no se pueden
+  editar). Si ya formas parte de alguna, la verás marcada en tu fila. Por ejemplo, la
+  <strong>Comisión de Verificación de Integridad en Candidaturas</strong> ya está integrada.</p>
+  <div class="nota">Si ya estás en <strong>Verificación de Integridad</strong>, esa <strong>cuenta</strong> para
+  tu límite: en ese caso solo podrás marcar <strong>3 comisiones permanentes más</strong>.</div>
+
+  <h2>7. Salir</h2>
+  <ul>
+    <li>Pulsa el botón <strong>“Salir”</strong> (arriba a la derecha) cuando termines.</li>
+    <li>Tu captura queda guardada; puedes volver a entrar cuando quieras a ajustarla.</li>
+  </ul>
+
+  <h2>Preguntas frecuentes</h2>
+  <ul>
+    <li><strong>¿Por qué no veo lo que marcaron los demás?</strong> Por privacidad: cada quien ve solo su
+      propia fila. El administrador es quien ve el panorama completo.</li>
+    <li><strong>¿Puedo cambiar mis marcas después?</strong> Sí, mientras el ejercicio siga abierto: entra y ajústalas.</li>
+    <li><strong>¿Qué pasa si marco más de lo permitido?</strong> El sistema te avisa y no te deja pasar del máximo de 4 permanentes.</li>
+    <li><strong>Consulta las reglas</strong> con el botón <strong>“Reglas generales”</strong> dentro del sistema.</li>
+  </ul>
+
+  <footer>Instituto Nacional Electoral · Matriz de Integración de Comisiones — Manual para consejeras y consejeros.</footer>
+</div>
+</body>
+</html>

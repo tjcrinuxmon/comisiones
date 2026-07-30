@@ -1322,17 +1322,26 @@ function construir(){
 
 const interesPuesto  = (idC, idK) => intereses[clave(idC, idK)] !== undefined;
 const proponePresi   = (idC, idK) => { const r = intereses[clave(idC, idK)]; return !!(r && r.p); };
-const porComisionInteres = k => CONSEJERIAS.filter(c => interesPuesto(c.id, k.id)).length;
+
+/* Presidencia/membresía "vista" en intereses, considerando la herencia del
+   Comité Editorial (autoPresi): quien se propone a la presidencia de la comisión
+   base (Capacitación) es, en el Comité, presidente e integrante automáticamente.
+   Como en intereses puede proponerse más de uno, el Comité puede mostrar varias
+   presidencias posibles hasta que el debate deje una sola. */
+const esPresiInteres = (idC, k) => k.autoPresi ? proponePresi(idC, k.autoPresi) : proponePresi(idC, k.id);
+const esInteresado   = (idC, k) => interesPuesto(idC, k.id) || (k.autoPresi ? proponePresi(idC, k.autoPresi) : false);
+
+const porComisionInteres = k => CONSEJERIAS.filter(c => esInteresado(c.id, k)).length;
 const porConsejeriaPermanentesInteres = c =>
-  COMISIONES.filter(k => cuentaLimite(k) && interesPuesto(c.id, k.id)).length;
+  COMISIONES.filter(k => cuentaLimite(k) && esInteresado(c.id, k)).length;
 
 /* Validación en modo intereses: mismas reglas que la verificación, pero el tope
    de integrantes sólo advierte (no bloquea). La presidencia son propuestas y
    pueden ser varias. Rotación/renovación contra la composición anterior. */
-const contarSexoInteres = (k, s) => CONSEJERIAS.filter(c => c.sexo === s && interesPuesto(c.id, k.id)).length;
+const contarSexoInteres = (k, s) => CONSEJERIAS.filter(c => c.sexo === s && esInteresado(c.id, k)).length;
 const paridadInteresOK  = k => (contarSexoInteres(k,'H') - contarSexoInteres(k,'M')) <= 1;
-const tienePresiInteres = k => CONSEJERIAS.some(c => proponePresi(c.id, k.id));
-const miembrosInteres   = k => new Set(CONSEJERIAS.filter(c => interesPuesto(c.id, k.id)).map(c => c.id));
+const tienePresiInteres = k => CONSEJERIAS.some(c => esPresiInteres(c.id, k));
+const miembrosInteres   = k => new Set(CONSEJERIAS.filter(c => esInteresado(c.id, k)).map(c => c.id));
 function rotacionInteresOK(k){
   if(!rotacionAplica(k)) return true;
   const base = basePresidente(k);
@@ -1394,15 +1403,19 @@ function pintarIntereses(){
     let total = 0;
     COMISIONES.forEach(k => {
       const td = document.querySelector('td.celda[data-c="' + c.id + '"][data-k="' + k.id + '"]');
-      const marcado = interesPuesto(c.id, k.id);
+      const marcado = esInteresado(c.id, k);
+      const presi   = esPresiInteres(c.id, k);
       if(marcado) total++;
       td.querySelector('.marca').classList.toggle('puesta', marcado);
       td.querySelector('.fecha').textContent = '';
       const sel = td.querySelector('.prel'); if(sel) sel.style.display = 'none';
       const cp = td.querySelector('.presi');
-      if(k.autoPresi){                                       // Comité Editorial: presidencia automática, no se propone
-        cp.textContent = ''; cp.className = 'presi'; cp.title = '';
-      }else if(marcado && proponePresi(c.id, k.id)){
+      if(k.autoPresi){                                       // Comité Editorial: presidencia heredada de Capacitación
+        if(presi){
+          cp.textContent = 'Presidencia (auto)'; cp.className = 'presi puesta auto';
+          cp.title = c.nombre + ' preside el Comité por proponerse a la presidencia de Capacitación Electoral';
+        }else{ cp.textContent = ''; cp.className = 'presi'; cp.title = ''; }
+      }else if(marcado && presi){
         cp.textContent = 'Presidencia (prop.)'; cp.className = 'presi puesta';
         cp.title = esFija(k) ? 'Presidencia (integración fija)' : 'Quitar la propuesta de presidencia de ' + c.nombre;
       }else if(marcado && !esFija(k)){

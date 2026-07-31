@@ -468,8 +468,8 @@ body.rol-consejero tfoot{display:none}
       <p>Las consejerías pueden participar hasta en cuatro comisiones <b>permanentes</b> por un periodo
       de tres años. Las comisiones temporales y otros órganos no cuentan para ese límite.</p>
       <p>La Comisión de <b>Verificación de Integridad en Candidaturas</b> ya fue integrada (30/07/2026) y
-      <b>cuenta</b> para el tope: a partir de septiembre todas las consejerías tienen máximo cuatro
-      permanentes, por lo que quienes la integran sólo pueden ocupar tres más.</p>
+      constituye una <b>excepción al tope</b>: <b>no cuenta</b> para el límite de cuatro. Quienes la integran
+      pueden ocupar hasta <b>cuatro permanentes más</b> (cinco en total).</p>
     </div>
 
     <div class="regla">
@@ -666,7 +666,7 @@ const COMISIONES = [
   { id:'ople',          nombre:'Vinculación con OPLE',                      min:4, max:4, grupo:'permanente' },
   { id:'servicio',      nombre:'Servicio Profesional Electoral Nacional',   min:3, max:5, grupo:'permanente' },
   { id:'verificacion',  nombre:'Verificación de Integridad en Candidaturas',min:3, max:3, grupo:'permanente',
-                        comparacion:'no-comparable', bloqueada:true, nota:'INTEGRADA 30/07/2026 · ya no elegible' },
+                        comparacion:'no-comparable', bloqueada:true, noCuentaLimite:true, nota:'INTEGRADA 30/07/2026 · ya no elegible' },
   /* --- Temporales (presididas siempre por una consejería; 3 a 5) --- */
   { id:'capyorg',       nombre:'Capacitación y Organización Electoral',     min:3, max:5, grupo:'temporal',
                         comparacion:'no-comparable' },
@@ -1067,7 +1067,7 @@ const porComision   = k => CONSEJERIAS.filter(c => estaPuesta(c.id, k.id)).lengt
 
 const esPermanente  = k => k.grupo === 'permanente';
 const esModificable = k => !k.bloqueada;                       // las bloqueadas no se editan ni se verifican
-const cuentaLimite  = k => esPermanente(k) && !k.noCuentaLimite;   // todas las permanentes cuentan (máx. 4)
+const cuentaLimite  = k => esPermanente(k) && !k.noCuentaLimite;   // Verificación NO cuenta (excepción): quien la integre puede llegar a 5
 /* El límite de 4 por consejería sólo cuenta las permanentes que sí cuentan
    (todas salvo Verificación de Integridad). Quien integre Verificación puede
    llegar a 5, como excepción. */
@@ -1640,7 +1640,7 @@ function alternar(idC, idK){
     delete marcas[clave(idC, idK)];
   }else{
     if(cuentaLimite(k) && porConsejeriaPermanentes(c) >= MAX_POR_CONSEJERIA)
-      return mostrarAviso(c.nombre + ' ya participa en ' + MAX_POR_CONSEJERIA + ' comisiones permanentes.');
+      return mostrarAviso(c.nombre + ' ya participa en ' + MAX_POR_CONSEJERIA + ' comisiones permanentes (Verificación de Integridad no cuenta).');
     if(porComision(k) >= k.max)
       return mostrarAviso(k.nombre + ' admite ' + k.max + ' integrantes y ya los tiene.');
 
@@ -1689,7 +1689,7 @@ function alternarInteres(idC, idK){
   }else{
     if(cuentaLimite(k) && porConsejeriaPermanentesInteres(c) >= MAX_POR_CONSEJERIA)
       return mostrarAviso(c.nombre + ' ya expresó interés en ' + MAX_POR_CONSEJERIA +
-        ' comisiones permanentes (máximo 4).');
+        ' comisiones permanentes (Verificación de Integridad no cuenta).');
     intereses[key] = {};   // objeto: presencia = integrante
   }
   pintar();                                  // optimista

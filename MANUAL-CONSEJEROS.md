@@ -71,8 +71,9 @@ Algunas comisiones **ya no cambian** y aparecen marcadas con un **candado** (no 
 pueden editar). Si ya formas parte de alguna, la verás en tu fila. Por ejemplo, la
 **Comisión de Verificación de Integridad en Candidaturas** ya está integrada.
 
-> Si ya estás en **Verificación de Integridad**, esa **cuenta** para tu límite: en
-> ese caso solo podrás marcar **3 comisiones permanentes más**.
+> Si ya estás en **Verificación de Integridad**, esa comisión es una **excepción** y
+> **no cuenta** para tu límite: en ese caso podrás marcar **hasta 4 comisiones
+> permanentes más** (5 en total).
 
 ---
 

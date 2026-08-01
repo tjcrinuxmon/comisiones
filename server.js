@@ -40,13 +40,25 @@ const nuevoToken = () => crypto.randomBytes(24).toString('hex');
    El admin nunca queda sujeto a la ventana. */
 const DEFAULT_CONFIG = { cierra: null, habilitado: true };
 const getConfig = () => Object.assign({}, DEFAULT_CONFIG, get('config') || {});
+
+/* La hora de cierre se teclea como hora de pared de la CDMX ("2026-08-02T23:59").
+   La anclamos EXPLÍCITAMENTE a UTC-6 (CDMX es fijo, sin horario de verano desde
+   2022), de modo que la comparación NO depende de la zona horaria ni de la tzdata
+   del servidor: aunque el SO esté en UTC, el cierre se evalúa en hora de México.
+   `Date.now()` es un instante absoluto (epoch), independiente de la zona. */
+const OFFSET_CDMX = '-06:00';
+function parseCierreCDMX(s){
+  if(!s) return NaN;
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(s));
+  return m ? Date.parse(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:00${OFFSET_CDMX}`) : Date.parse(s);
+}
 function ventanaConsejeros(){
   const c = getConfig();
   const ahora = Date.now();
   let abierta = true, motivo = '';
   if(!c.habilitado){ abierta = false; motivo = 'deshabilitado'; }
   else if(c.cierra){
-    const t = Date.parse(c.cierra);
+    const t = parseCierreCDMX(c.cierra);
     if(!isNaN(t) && ahora > t){ abierta = false; motivo = 'cerrado'; }
   }
   return { abierta, motivo, cierra: c.cierra || null, habilitado: !!c.habilitado, ahora };
@@ -80,8 +92,8 @@ app.post('/api/config', (req, res) => {
   const { cierra, habilitado } = req.body || {};
   const cfg = getConfig();
   if(cierra !== undefined){
-    if(cierra === null || cierra === '') cfg.cierra = null;
-    else if(isNaN(Date.parse(cierra)))   return res.status(400).json({ error: 'Fecha de cierre inválida.' });
+    if(cierra === null || cierra === '')      cfg.cierra = null;
+    else if(isNaN(parseCierreCDMX(cierra)))   return res.status(400).json({ error: 'Fecha de cierre inválida.' });
     else cfg.cierra = String(cierra);
   }
   if(habilitado !== undefined) cfg.habilitado = !!habilitado;

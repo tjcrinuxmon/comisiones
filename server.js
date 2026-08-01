@@ -83,7 +83,9 @@ app.get('/api/estado', (req, res) => {
     config:      ventanaConsejeros()
   });
 });
-app.get('/api/version', (req, res) => res.json({ version: get('version') || 0 }));
+/* El sondeo también vigila `abierta`: el cierre/reapertura por hora no cambia la
+   versión, así que se expone aquí para que la página reaccione en vivo (≤3 s). */
+app.get('/api/version', (req, res) => res.json({ version: get('version') || 0, abierta: ventanaConsejeros().abierta }));
 
 /* ---- Ventana de disponibilidad: consulta pública y edición del admin ---- */
 app.get('/api/config', (req, res) => res.json(ventanaConsejeros()));

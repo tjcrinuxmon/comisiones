@@ -1107,7 +1107,10 @@ async function sondear(){
   try{
     const r = await fetch(API + '/version');
     const j = await r.json();
-    if(j.version > ultimaVersion){ await cargarEstado(); pintar(); }
+    /* Recarga si cambió la versión O si la ventana pasó de abierta a cerrada
+       (o viceversa): el cierre por hora no bumpea versión, pero sí `abierta`. */
+    const ventanaCambio = (typeof j.abierta === 'boolean') && (j.abierta !== ventana.abierta);
+    if(j.version > ultimaVersion || ventanaCambio){ await cargarEstado(); pintar(); }
   }catch(e){}
 }
 

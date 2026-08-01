@@ -647,7 +647,7 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
       <input type="datetime-local" id="cfgCierra" oninput="actualizarPreviewCierre()">
     </label>
     <p id="cfgPreview" class="cfg-preview"></p>
-    <p class="cfg-ayuda">Ojo con <b>a.m./p.m.</b>: <b>12:00 a.m.</b> es medianoche y <b>12:00 p.m.</b> es mediodía. Deja el cierre en blanco para no fijar fecha límite. Para <b>reabrir</b>, mueve el cierre a más tarde y guarda: el cambio se aplica a todos en unos segundos.</p>
+    <p class="cfg-ayuda">Formato <b>24 h</b>: <b>00:25</b> es medianoche y <b>12:25</b> es mediodía. Deja el cierre en blanco para no fijar fecha límite. Para <b>reabrir</b>, mueve el cierre a más tarde y guarda: el cambio se aplica a todos en unos segundos.</p>
     <div class="cfg-pie">
       <button class="peligro" onclick="cerrarAhora()">Cerrar ahora</button>
       <button onclick="guardarConfig()">Guardar</button>
@@ -1881,9 +1881,7 @@ function fmtFechaHora(iso){
   if(!iso) return '';
   const d = new Date(iso);                    // "2026-08-02T23:59" -> hora local del navegador
   if(isNaN(d)) return iso;
-  /* 12 h con a.m./p.m. explícito para evitar confundir 12:00 a.m. (medianoche)
-     con 12:00 p.m. (mediodía). */
-  return d.toLocaleString('es-MX', { weekday:'long', day:'numeric', month:'long', hour:'numeric', minute:'2-digit', hour12:true });
+  return d.toLocaleString('es-MX', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit', hour12:false });
 }
 function mensajeCierre(){
   return 'La captura está cerrada' + (ventana.cierra ? ' (cerró el ' + fmtFechaHora(ventana.cierra) + ')' : '') +

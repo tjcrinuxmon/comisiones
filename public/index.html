@@ -365,6 +365,7 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
 .cfg-fila.cfg-col{flex-direction:column;align-items:flex-start;gap:6px}
 .cfg-fila input[type=datetime-local]{font:inherit;padding:7px 9px;border:1px solid var(--linea,#d9dbe0);border-radius:6px}
 .cfg-ayuda{margin:0;font-size:12.5px;color:#6b6f7a}
+.cfg-preview{margin:0;padding:8px 11px;border-radius:6px;font-size:13px;background:#eef4ff;border:1px solid #d3e0f7;color:#22406b}
 .cfg-pie{display:flex;justify-content:space-between;gap:10px;margin-top:4px}
 </style>
 </head>
@@ -643,9 +644,10 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
     </label>
     <label class="cfg-fila cfg-col">
       <span>Cierre de captura (fecha y hora, horario de la Ciudad de México):</span>
-      <input type="datetime-local" id="cfgCierra">
+      <input type="datetime-local" id="cfgCierra" oninput="actualizarPreviewCierre()">
     </label>
-    <p class="cfg-ayuda">Deja el cierre en blanco para no fijar fecha límite. Para <b>reabrir</b>, adelanta la fecha o mueve el cierre a más tarde y guarda: el cambio se aplica a todos en unos segundos.</p>
+    <p id="cfgPreview" class="cfg-preview"></p>
+    <p class="cfg-ayuda">Ojo con <b>a.m./p.m.</b>: <b>12:00 a.m.</b> es medianoche y <b>12:00 p.m.</b> es mediodía. Deja el cierre en blanco para no fijar fecha límite. Para <b>reabrir</b>, mueve el cierre a más tarde y guarda: el cambio se aplica a todos en unos segundos.</p>
     <div class="cfg-pie">
       <button class="peligro" onclick="cerrarAhora()">Cerrar ahora</button>
       <button onclick="guardarConfig()">Guardar</button>
@@ -1879,7 +1881,9 @@ function fmtFechaHora(iso){
   if(!iso) return '';
   const d = new Date(iso);                    // "2026-08-02T23:59" -> hora local del navegador
   if(isNaN(d)) return iso;
-  return d.toLocaleString('es-MX', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit', hour12:false });
+  /* 12 h con a.m./p.m. explícito para evitar confundir 12:00 a.m. (medianoche)
+     con 12:00 p.m. (mediodía). */
+  return d.toLocaleString('es-MX', { weekday:'long', day:'numeric', month:'long', hour:'numeric', minute:'2-digit', hour12:true });
 }
 function mensajeCierre(){
   return 'La captura está cerrada' + (ventana.cierra ? ' (cerró el ' + fmtFechaHora(ventana.cierra) + ')' : '') +
@@ -1913,10 +1917,22 @@ function aplicarVentana(){
     b.style.display = 'none';
   }
 }
+/* Muestra en palabras el momento exacto de cierre mientras el admin lo edita,
+   para cachar errores de a.m./p.m. antes de guardar. */
+function actualizarPreviewCierre(){
+  const v = document.getElementById('cfgCierra').value;
+  const el = document.getElementById('cfgPreview');
+  if(!v){
+    el.innerHTML = 'Sin fecha de cierre: la captura queda abierta hasta que fijes una o uses el interruptor.';
+  }else{
+    el.innerHTML = 'La captura se <b>cerrará</b> el <b>' + fmtFechaHora(v) + '</b> (hora de la Ciudad de México).';
+  }
+}
 function abrirConfig(){
   if(!esAdminRol()) return;
   document.getElementById('cfgHabilitado').checked = !!ventana.habilitado;
   document.getElementById('cfgCierra').value = ventana.cierra || '';
+  actualizarPreviewCierre();
   document.getElementById('cfgEstado').innerHTML = ventana.abierta
     ? '● Ahora mismo la captura está <b>ABIERTA</b> para consejerías.'
     : '● Ahora mismo la captura está <b>CERRADA</b> para consejerías.';

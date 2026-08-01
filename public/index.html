@@ -350,6 +350,22 @@ body.rol-consejero tr:not(.fila-yo) td.celda .presi{display:none}
    pie de totales (que revelaría la captura de los demás). */
 body.rol-consejero tbody tr[data-consejeria]:not(.fila-yo){display:none}
 body.rol-consejero tfoot{display:none}
+/* Ventana cerrada: el consejero ve su fila en SOLO LECTURA (sin editar). */
+body.ventana-cerrada.rol-consejero tr.fila-yo td.celda{cursor:not-allowed}
+body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
+/* Banner de disponibilidad */
+.banner-ventana{margin:12px 0;padding:11px 16px;border-radius:8px;font-size:14px;line-height:1.4}
+.banner-ventana.abierta{background:#eef7ee;border:1px solid #cfe6cf;color:#2f6b34}
+.banner-ventana.cerrada{background:#fdecec;border:1px solid #f3c6c6;color:#a12626}
+.banner-ventana b{font-weight:600}
+/* Diálogo de configuración */
+.cfg-cuerpo{padding:18px 22px;display:flex;flex-direction:column;gap:14px;max-width:560px}
+.cfg-estado{margin:0;padding:9px 12px;border-radius:6px;font-size:13.5px;background:#f3f4f6}
+.cfg-fila{display:flex;align-items:center;gap:10px;font-size:14px}
+.cfg-fila.cfg-col{flex-direction:column;align-items:flex-start;gap:6px}
+.cfg-fila input[type=datetime-local]{font:inherit;padding:7px 9px;border:1px solid var(--linea,#d9dbe0);border-radius:6px}
+.cfg-ayuda{margin:0;font-size:12.5px;color:#6b6f7a}
+.cfg-pie{display:flex;justify-content:space-between;gap:10px;margin-top:4px}
 </style>
 </head>
 <body>
@@ -406,12 +422,15 @@ body.rol-consejero tfoot{display:none}
     <button class="solo-admin" onclick="restaurarVigente()">Restaurar integración vigente</button>
     <button class="solo-admin" onclick="generarReporte()">Reporte imprimible</button>
     <button class="solo-admin" onclick="verClaves()">Contraseñas</button>
+    <button class="solo-admin" onclick="abrirConfig()">Disponibilidad</button>
     <button onclick="window.print()">Imprimir o guardar PDF</button>
     <button class="peligro solo-admin" onclick="limpiar()">Limpiar todo</button>
     <span id="quienSoy" class="quien-soy"></span>
     <button class="salir" onclick="salir()">Salir</button>
   </div>
 </div>
+
+<div id="bannerVentana" class="banner-ventana" style="display:none"></div>
 
 <div class="estado">
   <span id="marcador" class="marcador pendiente">—</span>
@@ -605,6 +624,32 @@ body.rol-consejero tfoot{display:none}
   <div class="reglas-cuerpo" id="clavesCuerpo"></div>
   <div class="reglas-pie">
     Al restablecer, esa consejería creará una nueva contraseña la próxima vez que entre (primer acceso).
+  </div>
+</dialog>
+
+<dialog id="dlgConfig">
+  <div class="reglas-head">
+    <div>
+      <h2>Disponibilidad para consejerías</h2>
+      <p>Define hasta cuándo pueden capturar los consejeros. Fuera de la ventana solo pueden ver su captura (solo lectura); el administrador siempre tiene acceso.</p>
+    </div>
+    <button onclick="document.getElementById('dlgConfig').close()">Cerrar</button>
+  </div>
+  <div class="cfg-cuerpo">
+    <p id="cfgEstado" class="cfg-estado"></p>
+    <label class="cfg-fila">
+      <input type="checkbox" id="cfgHabilitado">
+      <span>Sistema <b>habilitado</b> para consejerías (destildar cierra al instante)</span>
+    </label>
+    <label class="cfg-fila cfg-col">
+      <span>Cierre de captura (fecha y hora, horario de la Ciudad de México):</span>
+      <input type="datetime-local" id="cfgCierra">
+    </label>
+    <p class="cfg-ayuda">Deja el cierre en blanco para no fijar fecha límite. Para <b>reabrir</b>, adelanta la fecha o mueve el cierre a más tarde y guarda: el cambio se aplica a todos en unos segundos.</p>
+    <div class="cfg-pie">
+      <button class="peligro" onclick="cerrarAhora()">Cerrar ahora</button>
+      <button onclick="guardarConfig()">Guardar</button>
+    </div>
   </div>
 </dialog>
 
@@ -913,6 +958,11 @@ let prelacion = {};
 let modo = 'integracion';           // 'integracion' | 'intereses'
 let intereses = {};                 // { "idC|idK": { p?:true } }  (existe = integrante; p = se propone a presidencia)
 
+/* Ventana de disponibilidad (la calcula el servidor y viaja en /api/estado). El
+   consejero solo puede editar mientras `abierta`; el admin siempre. */
+let ventana = { abierta:true, cierra:null, habilitado:true, ahora:0 };
+const bloqueadaPorVentana = () => !esAdminRol() && !ventana.abierta;
+
 /* Las fechas del catálogo se fijan al mediodía para que ningún ajuste de
    zona horaria las corra al día anterior. */
 const aISO = ymd => new Date(ymd + 'T12:00:00').toISOString();
@@ -996,9 +1046,11 @@ function aplicarEstado(s){
   verificadas = s.verificadas || {};
   prelacion   = s.prelacion   || {};
   intereses   = s.intereses   || {};
+  if(s.config) ventana = s.config;
   ultimaVersion = s.version || 0;
   saneaEstado();
   mostrarMisFijas();                 // el consejero ve su membresía en las fijas
+  aplicarVentana();                  // banner y modo solo-lectura según disponibilidad
 }
 /* Trae el estado compartido del servidor. */
 async function cargarEstado(){
@@ -1680,6 +1732,7 @@ function alternarInteres(idC, idK){
   const c = CONSEJERIAS.find(x => x.id === idC);
   const k = COMISIONES.find(x => x.id === idK);
   if(esFija(k)) return mostrarAviso(k.nombre + ' ya está integrada y no cambia.');
+  if(bloqueadaPorVentana()) return mostrarAviso(mensajeCierre());
   if(!esAdminRol() && idC !== miConsejero)
     return mostrarAviso('Sólo puede capturar en su propia fila.');
   const key = clave(idC, idK);
@@ -1703,6 +1756,7 @@ function proponerPresidencia(idC, idK){
   const k = COMISIONES.find(x => x.id === idK);
   if(esFija(k)) return mostrarAviso(k.nombre + ' ya está integrada y no cambia.');
   if(k.autoPresi) return mostrarAviso('El Comité Editorial lo preside automáticamente quien presida Capacitación Electoral.');
+  if(bloqueadaPorVentana()) return mostrarAviso(mensajeCierre());
   if(!esAdminRol() && idC !== miConsejero)
     return mostrarAviso('Sólo puede capturar en su propia fila.');
   const reg = intereses[clave(idC, idK)];
@@ -1814,6 +1868,79 @@ function aplicarRol(){
   document.querySelectorAll('tr[data-consejeria]').forEach(tr =>
     tr.classList.toggle('fila-yo', !admin && tr.dataset.consejeria === miConsejero));
   aplicarModoUI();
+  aplicarVentana();
+}
+
+/* ---- Ventana de disponibilidad (frontend) ---- */
+function fmtFechaHora(iso){
+  if(!iso) return '';
+  const d = new Date(iso);                    // "2026-08-02T23:59" -> hora local del navegador
+  if(isNaN(d)) return iso;
+  return d.toLocaleString('es-MX', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit', hour12:false });
+}
+function mensajeCierre(){
+  return 'La captura está cerrada' + (ventana.cierra ? ' (cerró el ' + fmtFechaHora(ventana.cierra) + ')' : '') +
+    '. Para cambios, contacta a la Secretaría Ejecutiva.';
+}
+/* Banner + modo solo-lectura según la ventana. El admin nunca se bloquea. */
+function aplicarVentana(){
+  const cerrada = !ventana.abierta;
+  document.body.classList.toggle('ventana-cerrada', cerrada && !esAdminRol());
+  const b = document.getElementById('bannerVentana');
+  if(!b) return;
+  if(esAdminRol()){
+    b.style.display = '';
+    b.className = 'banner-ventana ' + (cerrada ? 'cerrada' : 'abierta');
+    b.innerHTML = cerrada
+      ? '<b>Captura CERRADA para consejerías.</b> ' +
+        (ventana.habilitado ? ('Cerró el ' + fmtFechaHora(ventana.cierra) + '.') : 'El sistema está deshabilitado.') +
+        ' Tú (administrador) puedes seguir editando. Usa “Disponibilidad” para reabrir.'
+      : '<b>Captura ABIERTA para consejerías.</b> ' +
+        (ventana.cierra ? ('Cierra el ' + fmtFechaHora(ventana.cierra) + '.') : 'Sin fecha de cierre.') +
+        ' Ajusta en “Disponibilidad”.';
+  }else if(cerrada){
+    b.style.display = '';
+    b.className = 'banner-ventana cerrada';
+    b.innerHTML = '<b>La captura está cerrada.</b> Puedes ver tu registro, pero ya no es posible modificarlo. Para cambios, contacta a la Secretaría Ejecutiva.';
+  }else if(ventana.cierra){
+    b.style.display = '';
+    b.className = 'banner-ventana abierta';
+    b.innerHTML = 'La captura de intereses está <b>abierta</b> hasta el <b>' + fmtFechaHora(ventana.cierra) + '</b>.';
+  }else{
+    b.style.display = 'none';
+  }
+}
+function abrirConfig(){
+  if(!esAdminRol()) return;
+  document.getElementById('cfgHabilitado').checked = !!ventana.habilitado;
+  document.getElementById('cfgCierra').value = ventana.cierra || '';
+  document.getElementById('cfgEstado').innerHTML = ventana.abierta
+    ? '● Ahora mismo la captura está <b>ABIERTA</b> para consejerías.'
+    : '● Ahora mismo la captura está <b>CERRADA</b> para consejerías.';
+  document.getElementById('dlgConfig').showModal();
+}
+async function guardarConfig(){
+  if(!esAdminRol()) return;
+  const habilitado = document.getElementById('cfgHabilitado').checked;
+  const cierra = document.getElementById('cfgCierra').value || null;
+  try{
+    const r = await fetch(API + '/config', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'X-Admin': adminPass },
+      body: JSON.stringify({ habilitado, cierra })
+    });
+    const j = await r.json();
+    if(!r.ok) return mostrarAviso(j.error || 'No se pudo guardar la disponibilidad.');
+    ventana = { abierta:j.abierta, cierra:j.cierra, habilitado:j.habilitado, ahora:j.ahora };
+    ultimaVersion = -1;                       // fuerza que el sondeo repinte en todos
+    aplicarVentana();
+    document.getElementById('dlgConfig').close();
+    mostrarAviso('Disponibilidad actualizada.');
+  }catch(e){ mostrarAviso('Error de red al guardar la disponibilidad.'); }
+}
+function cerrarAhora(){
+  document.getElementById('cfgHabilitado').checked = false;
+  guardarConfig();
 }
 
 /* Alterna entre la integración real y la expresión de intereses (sólo admin). */

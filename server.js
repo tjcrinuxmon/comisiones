@@ -31,6 +31,27 @@ app.use(express.static(path.join(__dirname, 'public')));
 const esAdmin    = req => (req.header('X-Admin') || '') === ADMIN_PASS;
 const nuevoToken = () => crypto.randomBytes(24).toString('hex');
 
+/* ---- Ventana de disponibilidad para consejeros ----
+   Config en la tabla `estado` (llave 'config'): { cierra, habilitado }.
+   - habilitado=false  -> cerrado al instante (interruptor maestro).
+   - cierra (texto datetime-local, p.ej. "2026-08-02T23:59") -> cerrado pasada esa
+     hora. Se interpreta en la zona del server (America/Mexico_City, línea 10).
+   - Sin config -> abierto (no altera el comportamiento previo).
+   El admin nunca queda sujeto a la ventana. */
+const DEFAULT_CONFIG = { cierra: null, habilitado: true };
+const getConfig = () => Object.assign({}, DEFAULT_CONFIG, get('config') || {});
+function ventanaConsejeros(){
+  const c = getConfig();
+  const ahora = Date.now();
+  let abierta = true, motivo = '';
+  if(!c.habilitado){ abierta = false; motivo = 'deshabilitado'; }
+  else if(c.cierra){
+    const t = Date.parse(c.cierra);
+    if(!isNaN(t) && ahora > t){ abierta = false; motivo = 'cerrado'; }
+  }
+  return { abierta, motivo, cierra: c.cierra || null, habilitado: !!c.habilitado, ahora };
+}
+
 /* ---- Estado compartido (carga inicial y sondeo) ---- */
 app.get('/api/estado', (req, res) => {
   let intereses = get('intereses') || {};
@@ -46,10 +67,28 @@ app.get('/api/estado', (req, res) => {
     marcas:      get('marcas') || {},
     intereses:   intereses,
     prelacion:   get('prelacion') || {},
-    verificadas: get('verificadas') || {}
+    verificadas: get('verificadas') || {},
+    config:      ventanaConsejeros()
   });
 });
 app.get('/api/version', (req, res) => res.json({ version: get('version') || 0 }));
+
+/* ---- Ventana de disponibilidad: consulta pública y edición del admin ---- */
+app.get('/api/config', (req, res) => res.json(ventanaConsejeros()));
+app.post('/api/config', (req, res) => {
+  if(!esAdmin(req)) return res.status(403).json({ error: 'Sólo administrador.' });
+  const { cierra, habilitado } = req.body || {};
+  const cfg = getConfig();
+  if(cierra !== undefined){
+    if(cierra === null || cierra === '') cfg.cierra = null;
+    else if(isNaN(Date.parse(cierra)))   return res.status(400).json({ error: 'Fecha de cierre inválida.' });
+    else cfg.cierra = String(cierra);
+  }
+  if(habilitado !== undefined) cfg.habilitado = !!habilitado;
+  set('config', { cierra: cfg.cierra, habilitado: cfg.habilitado });
+  bump();
+  res.json(Object.assign({ ok: true }, ventanaConsejeros()));
+});
 
 /* ---- Acceso de consejeros (primer acceso / login / sesión) ---- */
 app.post('/api/consejero/estado', (req, res) => {
@@ -102,6 +141,8 @@ app.post('/api/interes', (req, res) => {
     const soy = getSesion(req.header('X-Token') || '');
     if(!soy)             return res.status(401).json({ error: 'Sesión no válida; vuelva a entrar.' });
     if(soy !== consejero) return res.status(403).json({ error: 'Sólo puede editar su propia fila.' });
+    if(!ventanaConsejeros().abierta)
+      return res.status(403).json({ cerrado: true, error: 'La captura está cerrada. Para cambios, contacta a la Secretaría Ejecutiva.' });
   }
   const intereses = get('intereses') || {};
   const key = consejero + '|' + comision;

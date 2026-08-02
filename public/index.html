@@ -1129,6 +1129,10 @@ const cuentaLimite  = k => esPermanente(k) && !k.noCuentaLimite;   // Verificaci
    (todas salvo Verificación de Integridad). Quien integre Verificación puede
    llegar a 5, como excepción. */
 const porConsejeriaPermanentes = c => COMISIONES.filter(k => cuentaLimite(k) && estaPuesta(c.id, k.id)).length;
+/* Total REAL de permanentes que integra, incluyendo Verificación de Integridad.
+   Solo se usa para MOSTRAR el conteo (quien integre Verificación aparece con 5);
+   el límite de 4 se valida con porConsejeriaPermanentes (que excluye Verificación). */
+const porConsejeriaPermanentesReal = c => COMISIONES.filter(k => esPermanente(k) && estaPuesta(c.id, k.id)).length;
 
 /* Orden de prelación de suplencias (comisiones con prelacion:true, p. ej. Quejas
    y Denuncias, Art. 44.2.c RQD). Ser suplente NO cuenta como integrar ni para el
@@ -1539,7 +1543,8 @@ function pintar(){
   if(modo === 'intereses') return pintarIntereses();
   CONSEJERIAS.forEach(c => {
     const total    = porConsejeria(c);
-    const permTotal = porConsejeriaPermanentes(c);
+    const permTotal = porConsejeriaPermanentes(c);       // cuentan para el límite (excluye Verificación)
+    const permReal  = porConsejeriaPermanentesReal(c);   // total real mostrado (incluye Verificación)
 
     COMISIONES.forEach(k => {
       const td   = document.querySelector('td.celda[data-c="' + c.id + '"][data-k="' + k.id + '"]');
@@ -1619,10 +1624,13 @@ function pintar(){
     });
 
     const celdaTotal = document.querySelector('tr[data-consejeria="' + c.id + '"] td.total');
-    celdaTotal.textContent = permTotal;
+    celdaTotal.textContent = permReal;                   // muestra el total real (5 si integra Verificación)
     celdaTotal.classList.toggle('lleno', permTotal === MAX_POR_CONSEJERIA);
-    celdaTotal.classList.toggle('excedido', permTotal > MAX_POR_CONSEJERIA);
-    celdaTotal.title = 'Comisiones permanentes: ' + permTotal + ' de ' + MAX_POR_CONSEJERIA +
+    celdaTotal.classList.toggle('excedido', permTotal > MAX_POR_CONSEJERIA);   // rojo solo si rebasa las 4 que cuentan
+    const extra = permReal - permTotal;                  // 1 si integra Verificación (no cuenta para el límite)
+    celdaTotal.title = 'Comisiones permanentes: ' + permReal +
+                       (extra ? ' (incluye Verificación de Integridad, que no cuenta para el límite de ' + MAX_POR_CONSEJERIA + ')'
+                              : ' de ' + MAX_POR_CONSEJERIA) +
                        ' · participaciones totales: ' + total;
   });
 

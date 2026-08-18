@@ -31,6 +31,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 const esAdmin    = req => (req.header('X-Admin') || '') === ADMIN_PASS;
 const nuevoToken = () => crypto.randomBytes(24).toString('hex');
 
+/* Consejerías válidas. DEBE coincidir con CONSEJERIAS de public/index.html: si
+   se agrega o cambia una consejería en el catálogo, actualizar también esta
+   lista. Sin ella, /api/consejero/registrar acepta cualquier nombre y quien sea
+   puede crear filas anónimas sin tope en la tabla `claves`. */
+const CONSEJERIAS = [
+  'castillo', 'chavez', 'cruzg', 'delacruz', 'espadas',
+  'faz', 'gomez', 'humphrey', 'lopezv', 'montano'
+];
+const esConsejeria = c => CONSEJERIAS.includes(String(c || ''));
+
 /* ---- Ventana de disponibilidad para consejeros ----
    Config en la tabla `estado` (llave 'config'): { cierra, habilitado }.
    - habilitado=false  -> cerrado al instante (interruptor maestro).
@@ -111,7 +121,9 @@ app.post('/api/consejero/estado', (req, res) => {
 });
 app.post('/api/consejero/registrar', (req, res) => {
   const { consejero, clave } = req.body || {};
-  if(!consejero || !clave || String(clave).length < 8)
+  if(!esConsejeria(consejero))
+    return res.status(400).json({ error: 'Consejería no válida.' });
+  if(!clave || String(clave).length < 8)
     return res.status(400).json({ error: 'Contraseña inválida (mínimo 8 caracteres).' });
   if(getClave(consejero))
     return res.status(409).json({ error: 'Ya tiene contraseña; inicie sesión.' });
@@ -188,7 +200,10 @@ app.post('/api/admin/login', (req, res) => {
   res.json({ ok: (req.body && req.body.clave) === ADMIN_PASS });
 });
 
-app.get('*', (req, res) => {
-  if(!req.path.startsWith('/api')) res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+/* Toda ruta /api que no exista responde 404. Antes no se respondía nada y la
+   petición quedaba abierta hasta que el cliente o nginx la cortaran, dejando
+   conexiones colgadas ante cualquier error de dedo o escaneo. */
+app.use('/api', (req, res) => res.status(404).json({ error: 'Recurso no encontrado.' }));
+
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.listen(PORT, () => console.log(`✅ Matriz de Comisiones en http://localhost:${PORT}`));

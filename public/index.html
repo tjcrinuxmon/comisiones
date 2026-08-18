@@ -91,7 +91,20 @@ thead th.esquina{
   padding:10px 14px;font-size:12.5px;
   border-right:1px solid rgba(255,255,255,.35);
 }
-th.total-col{width:58px;min-width:58px;max-width:58px;padding:10px 4px}
+/* Columna final "Total comisiones": un encabezado de grupo sobre dos
+   subcolumnas (permanentes | temporales y otros órganos). Son conteos: no
+   muestran máximos ni mínimos. */
+th.total-col{width:62px;min-width:62px;max-width:62px;padding:8px 4px}
+thead th.total-grupo{
+  position:sticky;top:0;z-index:4;padding:6px 6px;
+  font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#fff;
+  background:#4a4550;border-bottom:2px solid rgba(255,255,255,.25);
+  white-space:normal;
+}
+thead th.total-col.sub{
+  z-index:3;font-size:10px;font-weight:600;
+  white-space:normal;overflow-wrap:break-word;hyphens:auto;
+}
 
 tbody td{border-bottom:1px solid var(--linea);border-right:1px solid var(--linea);padding:0}
 tbody tr:hover td{background:#fafafb}
@@ -138,10 +151,11 @@ td.celda:hover .presi.disponible{opacity:.8}
 .presi.puesta:hover,.presi.disponible:hover{background:rgba(213,0,127,.12);color:var(--ine);opacity:1}
 
 td.total{
-  width:58px;min-width:58px;text-align:center;
+  width:62px;min-width:62px;text-align:center;
   font-family:var(--mono);font-size:15px;font-weight:600;
   color:var(--tenue);background:#fbfbfc;
 }
+td.total.total-perm{border-left:2px solid var(--linea)}
 td.total.lleno{color:var(--ok)}
 td.total.excedido{color:var(--excede);background:var(--excede-bg)}
 
@@ -151,6 +165,9 @@ tfoot td{
   padding:9px 6px;text-align:center;
 }
 tfoot td.persona{z-index:4;text-align:left;font-weight:600;font-size:12.5px;background:#f7f7f9}
+/* Suma general de la esquina: se pinta como el resto del pie, no como las
+   celdas de total de cada consejería. */
+tfoot td.total{background:#f7f7f9;color:var(--tinta);font-size:15px}
 tfoot .conteo{display:block;font-family:var(--mono);font-size:15px;font-weight:600;margin-bottom:3px}
 tfoot .sello{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap}
 .sello.ok{background:var(--ok-bg);color:var(--ok)}
@@ -295,7 +312,11 @@ dialog#reglas::backdrop{background:rgba(23,23,26,.55)}
   thead th .nueva{font-size:5.5px;margin-top:2px;line-height:1.15}
   thead th.esquina{font-size:8.5px;padding:4px 5px}
   thead th.col-com{width:auto!important;min-width:0!important;max-width:none!important;padding:4px 2px}
-  th.total-col{width:5.5%!important;min-width:0!important;max-width:none!important}
+  /* Las dos subcolumnas de "Total comisiones" se reparten el ancho que antes
+     ocupaba la columna única. */
+  th.total-col{width:5%!important;min-width:0!important;max-width:none!important}
+  thead th.total-grupo{font-size:7px;padding:3px 2px}
+  thead th.total-col.sub{font-size:6.5px;padding:4px 1px}
 
   td.persona,th.persona{width:21%!important;white-space:normal!important;padding:3px 5px}
   td.persona .nombre{font-size:8.5px;line-height:1.2}
@@ -1133,6 +1154,22 @@ const porConsejeriaPermanentes = c => COMISIONES.filter(k => cuentaLimite(k) && 
    Solo se usa para MOSTRAR el conteo (quien integre Verificación aparece con 5);
    el límite de 4 se valida con porConsejeriaPermanentes (que excluye Verificación). */
 const porConsejeriaPermanentesReal = c => COMISIONES.filter(k => esPermanente(k) && estaPuesta(c.id, k.id)).length;
+/* Temporales y otros órganos que integra (columna derecha de "Total
+   comisiones"). No tienen tope por consejería: es sólo la suma. */
+const porConsejeriaTemporales = c => COMISIONES.filter(k => !esPermanente(k) && estaPuesta(c.id, k.id)).length;
+
+/* Suma general al pie de la tabla: cuántas designaciones hay en total en las
+   permanentes y cuántas en temporales y otros órganos. */
+function pintarPieTotales(sumaPerm, sumaTemp){
+  const pp = document.querySelector('tfoot td[data-pie-total="perm"]');
+  const pt = document.querySelector('tfoot td[data-pie-total="temp"]');
+  if(!pp || !pt) return;
+  pp.textContent = sumaPerm;
+  pt.textContent = sumaTemp;
+  pp.title = sumaPerm + ' designaciones en comisiones permanentes';
+  pt.title = sumaTemp + ' designaciones en temporales y otros órganos · ' +
+             (sumaPerm + sumaTemp) + ' en total';
+}
 
 /* Orden de prelación de suplencias (comisiones con prelacion:true, p. ej. Quejas
    y Denuncias, Art. 44.2.c RQD). Ser suplente NO cuenta como integrar ni para el
@@ -1324,18 +1361,22 @@ function construir(){
           '<span class="presi"></span>' +
           (k.prelacion ? '<select class="prel"></select>' : '') +
         '</td>').join('') +
-      '<td class="total"></td>' +
+      '<td class="total total-perm"></td>' +
+      '<td class="total total-temp"></td>' +
     '</tr>').join('');
 
   const pie = '<tr><td class="persona">Total por comisión</td>' +
     COMISIONES.map(k => '<td class="grupo-' + k.grupo + div(k) + '" data-pie="' + k.id + '"></td>').join('') +
-    '<td></td></tr>';
+    '<td class="total total-perm" data-pie-total="perm"></td>' +
+    '<td class="total total-temp" data-pie-total="temp"></td></tr>';
 
   t.innerHTML =
     '<thead>' +
       '<tr><th class="esquina persona" rowspan="2">Consejería Electoral</th>' + grupoCeldas +
-        '<th class="total-col" rowspan="2">Perm.<span class="regla">máx. ' + MAX_POR_CONSEJERIA + '</span></th></tr>' +
-      '<tr>' + encabezados + '</tr>' +
+        '<th class="total-grupo" colspan="2">Total comisiones</th></tr>' +
+      '<tr>' + encabezados +
+        '<th class="total-col sub">Permanentes</th>' +
+        '<th class="total-col sub">Temporales y otros órganos</th></tr>' +
     '</thead>' +
     '<tbody>' + filas + '</tbody>' +
     '<tfoot>' + pie + '</tfoot>';
@@ -1346,7 +1387,9 @@ function construir(){
      Se mide la celda de grupo (una sola fila, sin rowspan) tras liberar el
      'top' para no arrastrar el desfase actual. */
   const alinearCabecera = () => {
-    const cols = t.querySelectorAll('thead th.col-com');
+    /* Las subcolumnas de "Total comisiones" viven en el mismo renglón que las
+       comisiones, así que se fijan a la misma altura. */
+    const cols = t.querySelectorAll('thead th.col-com, thead th.total-col.sub');
     cols.forEach(th => { th.style.top = 'auto'; });          // liberar para medir la altura real
     const grupoTh = t.querySelector('thead th.grupo');
     const h = grupoTh ? grupoTh.getBoundingClientRect().height : 0;
@@ -1395,6 +1438,13 @@ const esInteresado   = (idC, k) => interesPuesto(idC, k.id) || (k.autoPresi ? pr
 const porComisionInteres = k => CONSEJERIAS.filter(c => esInteresado(c.id, k)).length;
 const porConsejeriaPermanentesInteres = c =>
   COMISIONES.filter(k => cuentaLimite(k) && esInteresado(c.id, k)).length;
+/* Conteos que se muestran en "Total comisiones" durante la expresión de
+   intereses: permanentes incluye Verificación de Integridad (que no cuenta para
+   el límite, pero sí es una comisión permanente). */
+const porConsejeriaPermanentesInteresReal = c =>
+  COMISIONES.filter(k => esPermanente(k) && esInteresado(c.id, k)).length;
+const porConsejeriaTemporalesInteres = c =>
+  COMISIONES.filter(k => !esPermanente(k) && esInteresado(c.id, k)).length;
 
 /* Validación en modo intereses: mismas reglas que la verificación, pero el tope
    de integrantes sólo advierte (no bloquea). La presidencia son propuestas y
@@ -1493,14 +1543,26 @@ function pintarIntereses(){
                ? k.nombre + ' — integración fija (no cambia)'
                : (marcado ? 'Quitar el interés de ' : 'Marcar interés de ') + c.nombre + ' en ' + k.nombre;
     });
-    const permInt = porConsejeriaPermanentesInteres(c);
-    const celdaTotal = document.querySelector('tr[data-consejeria="' + c.id + '"] td.total');
-    celdaTotal.textContent = total;
-    celdaTotal.classList.remove('lleno');
-    celdaTotal.classList.toggle('excedido', permInt > MAX_POR_CONSEJERIA);
-    celdaTotal.title = c.nombre + ' — ' + total + ' intereses · ' + permInt + ' permanentes (máx ' +
-                       MAX_POR_CONSEJERIA + ')';
+    const permInt   = porConsejeriaPermanentesInteres(c);          // sólo las que topan
+    const permReal  = porConsejeriaPermanentesInteresReal(c);      // todas las permanentes marcadas
+    const temporales = porConsejeriaTemporalesInteres(c);
+    const fila      = document.querySelector('tr[data-consejeria="' + c.id + '"]');
+    const celdaPerm = fila.querySelector('td.total-perm');
+    const celdaTemp = fila.querySelector('td.total-temp');
+    celdaPerm.textContent = permReal;
+    celdaTemp.textContent = temporales;
+    celdaPerm.classList.remove('lleno');
+    /* La columna ya no anuncia el máximo, pero sigue marcando en rojo a quien
+       rebase el límite de permanentes: es el aviso que ya daba la matriz. */
+    celdaPerm.classList.toggle('excedido', permInt > MAX_POR_CONSEJERIA);
+    celdaPerm.title = c.nombre + ' — ' + permReal + ' comisiones permanentes de interés';
+    celdaTemp.title = c.nombre + ' — ' + temporales + ' entre temporales y otros órganos · ' +
+                      total + ' en total';
   });
+
+  pintarPieTotales(
+    CONSEJERIAS.reduce((s, c) => s + porConsejeriaPermanentesInteresReal(c), 0),
+    CONSEJERIAS.reduce((s, c) => s + porConsejeriaTemporalesInteres(c), 0));
 
   let enRegla = 0;
   COMISIONES.forEach(k => {
@@ -1623,16 +1685,25 @@ function pintar(){
       }
     });
 
-    const celdaTotal = document.querySelector('tr[data-consejeria="' + c.id + '"] td.total');
-    celdaTotal.textContent = permReal;                   // muestra el total real (5 si integra Verificación)
-    celdaTotal.classList.toggle('lleno', permTotal === MAX_POR_CONSEJERIA);
-    celdaTotal.classList.toggle('excedido', permTotal > MAX_POR_CONSEJERIA);   // rojo solo si rebasa las 4 que cuentan
+    const temporales = porConsejeriaTemporales(c);
+    const fila      = document.querySelector('tr[data-consejeria="' + c.id + '"]');
+    const celdaPerm = fila.querySelector('td.total-perm');
+    const celdaTemp = fila.querySelector('td.total-temp');
+    celdaPerm.textContent = permReal;                    // total real (5 si integra Verificación)
+    celdaTemp.textContent = temporales;
+    celdaPerm.classList.toggle('lleno', permTotal === MAX_POR_CONSEJERIA);
+    celdaPerm.classList.toggle('excedido', permTotal > MAX_POR_CONSEJERIA);   // rojo solo si rebasa las 4 que cuentan
     const extra = permReal - permTotal;                  // 1 si integra Verificación (no cuenta para el límite)
-    celdaTotal.title = 'Comisiones permanentes: ' + permReal +
-                       (extra ? ' (incluye Verificación de Integridad, que no cuenta para el límite de ' + MAX_POR_CONSEJERIA + ')'
-                              : ' de ' + MAX_POR_CONSEJERIA) +
-                       ' · participaciones totales: ' + total;
+    celdaPerm.title = 'Comisiones permanentes: ' + permReal +
+                      (extra ? ' (incluye Verificación de Integridad, que no cuenta para el límite de ' +
+                               MAX_POR_CONSEJERIA + ')' : '');
+    celdaTemp.title = 'Temporales y otros órganos: ' + temporales +
+                      ' · participaciones totales: ' + total;
   });
+
+  pintarPieTotales(
+    CONSEJERIAS.reduce((s, c) => s + porConsejeriaPermanentesReal(c), 0),
+    CONSEJERIAS.reduce((s, c) => s + porConsejeriaTemporales(c), 0));
 
   let enRegla = 0, modificables = 0;
 

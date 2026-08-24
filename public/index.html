@@ -438,7 +438,7 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
   <div class="herramientas">
     <button onclick="verReglas()">Reglas generales</button>
     <button id="btnModo" onclick="alternarModo()">Expresar intereses</button>
-    <button id="btnResumen" onclick="verResumenIntereses()" style="display:none">Resumen / iniciar debate</button>
+    <button id="btnResumen" onclick="verResumenIntereses()" style="display:none">Hallazgos</button>
     <button id="btnVolcar" onclick="volcarIntereses()" style="display:none">Volcar intereses → integración</button>
     <button id="btnLimpiarInt" class="peligro" onclick="limpiarIntereses()" style="display:none">Limpiar intereses</button>
     <button class="solo-admin" onclick="restaurarVigente()">Restaurar integración vigente</button>
@@ -502,6 +502,12 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
         Capacitación y Organización Electoral (sin composición comparable en el acuerdo), ni en las
         comisiones con integración bloqueada (excepción no aplicable).</li>
       </ul>
+      <p><b>Excepción por refrendo de la presidencia.</b> En el acuerdo de abril no todas las comisiones
+      refrendaron su presidencia: <b>Fiscalización</b> y <b>Servicio Profesional Electoral Nacional</b>
+      fueron las únicas que la cambiaron. Como esas presidencias no cumplen todavía el año, en estas dos
+      comisiones <b>no se exige la rotación</b> y se puede refrendar a quien preside, aun cuando al
+      término del periodo acumule más de un año. La <b>renovación mínima sí se sigue verificando</b> en
+      ambas, igual que el resto de las reglas.</p>
     </div>
 
     <div class="regla">
@@ -530,6 +536,9 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
         y se integran con un mínimo de 3 y un máximo de 5 consejerías, bajo el principio de paridad.</li>
         <li>La Comisión de Presupuesto 2027 y la de Seguimiento de los Procesos Electorales Locales
         2025-2026 conservan su <b>integración bloqueada</b>: no se editan en la matriz.</li>
+        <li>La Comisión de Seguimiento de los Procesos Electorales Locales 2025-2026 está
+        <b>en decisión</b> (continúa o se extingue): se muestra y conserva su integración, pero
+        <b>no se suma</b> a los totales de comisiones temporales ni al gran total.</li>
         <li>El <b>Comité Editorial</b> se integra con 2 personas, bajo paridad, y lo preside
         automáticamente quien presida la Comisión de Capacitación Electoral y Educación Cívica;
         esa persona debe además estar <b>integrada</b> al Comité (no puede presidir sin integrarlo).</li>
@@ -624,10 +633,13 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
 <dialog id="resumen">
   <div class="reglas-head">
     <div>
-      <h2>Resumen de intereses · iniciar debate</h2>
+      <h2>Hallazgos</h2>
       <p>Cuántas consejerías quieren cada comisión, frente a su cupo</p>
     </div>
-    <button onclick="cerrarResumen()">Cerrar</button>
+    <div style="display:flex;gap:8px">
+      <button onclick="imprimirHallazgos()">Imprimir o guardar PDF</button>
+      <button onclick="cerrarResumen()">Cerrar</button>
+    </div>
   </div>
   <div class="reglas-cuerpo" id="resumenCuerpo"></div>
   <div class="reglas-pie">
@@ -691,8 +703,20 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
                   'excepcion' (Punto 9). Controla si se verifican la
                   rotación de la presidencia y la renovación mínima
                   contra la composición anterior (INE/CG241/2026).
+     refrendoPresidencia: true → esta comisión SÍ puede refrendar a quien
+                  preside: su presidencia cambió en el acuerdo de abril, no
+                  lleva el año, y por eso la rotación anual todavía no le
+                  corresponde. Excepción independiente de 'comparacion':
+                  apaga SÓLO la rotación; la renovación mínima y las demás
+                  reglas se siguen verificando con normalidad.
      autoPresi  : id de la comisión cuya presidencia preside también a
                   este órgano de forma automática (Comité Editorial).
+     noComputa  : true → la comisión se muestra y conserva su integración, pero
+                  NO se suma a ningún total: ni a la columna «Total comisiones»
+                  de cada consejería, ni al pie de la tabla, ni a los subtotales
+                  y gran total del reporte. Se usa para las comisiones en
+                  decisión (continúan o se extinguen), cuyas designaciones no
+                  deben inflar el conteo mientras se resuelve.
      noCuentaLimite: true → esta comisión NO cuenta para el límite de 4
                   (Verificación de Integridad). Así, quien la integre puede
                   llegar a 5 permanentes, como excepción.
@@ -725,14 +749,16 @@ const CONSEJERIAS = [
 const COMISIONES = [
   /* --- Permanentes (LGIPE art. 42.2 — diez comisiones) --- */
   { id:'organizacion',  nombre:'Organización Electoral',                    min:3, max:5, grupo:'permanente' },
-  { id:'fiscalizacion', nombre:'Fiscalización',                             min:5, max:5, grupo:'permanente' },
+  { id:'fiscalizacion', nombre:'Fiscalización',                             min:5, max:5, grupo:'permanente',
+                        refrendoPresidencia:true },
   { id:'capacitacion',  nombre:'Capacitación Electoral y Educación Cívica', min:3, max:5, grupo:'permanente' },
   { id:'prerrogativas', nombre:'Prerrogativas y Partidos Políticos / Radio y TV', min:3, max:5, grupo:'permanente' },
   { id:'registro',      nombre:'Registro Federal de Electores',             min:3, max:5, grupo:'permanente' },
   { id:'igualdad',      nombre:'Igualdad de Género y no Discriminación',    min:3, max:5, grupo:'permanente' },
   { id:'quejas',        nombre:'Quejas y Denuncias',                        min:3, max:3, grupo:'permanente', prelacion:true },
   { id:'ople',          nombre:'Vinculación con OPLE',                      min:4, max:4, grupo:'permanente' },
-  { id:'servicio',      nombre:'Servicio Profesional Electoral Nacional',   min:3, max:5, grupo:'permanente' },
+  { id:'servicio',      nombre:'Servicio Profesional Electoral Nacional',   min:3, max:5, grupo:'permanente',
+                        refrendoPresidencia:true },
   { id:'verificacion',  nombre:'Verificación de Integridad en Candidaturas',min:3, max:3, grupo:'permanente',
                         comparacion:'no-comparable', bloqueada:true, noCuentaLimite:true, nota:'INTEGRADA 30/07/2026 · ya no elegible' },
   /* --- Temporales (presididas siempre por una consejería; 3 a 5) --- */
@@ -740,7 +766,7 @@ const COMISIONES = [
                         comparacion:'no-comparable' },
   { id:'transparencia', nombre:'Transparencia, Acceso a la Información y Protección de Datos Personales', min:3, max:5, grupo:'temporal' },
   { id:'seguimiento',   nombre:'Seguimiento de los Procesos Electorales Locales 2025-2026', min:3, max:5, grupo:'temporal',
-                        bloqueada:true, comparacion:'excepcion' },
+                        bloqueada:true, comparacion:'excepcion', noComputa:true },
   { id:'voto',          nombre:'Voto de las y los Mexicanos Residentes en el Extranjero', min:3, max:5, grupo:'temporal' },
   { id:'presupuesto',   nombre:'Presupuesto 2027',                          min:3, max:5, grupo:'temporal',
                         bloqueada:true, comparacion:'excepcion' },
@@ -1140,7 +1166,10 @@ async function sondear(){
 const clave    = (c,k) => c + '|' + k;
 const marcaDe    = (c,k) => marcas[clave(c,k)];
 const estaPuesta = (c,k) => marcaDe(c,k) !== undefined;
-const porConsejeria = c => COMISIONES.filter(k => estaPuesta(c.id, k.id)).length;
+/* Comisiones en decisión (noComputa): se muestran y conservan su integración,
+   pero no suman en ningún total. Hoy: Seguimiento PEL 2025-2026. */
+const computa       = k => !k.noComputa;
+const porConsejeria = c => COMISIONES.filter(k => computa(k) && estaPuesta(c.id, k.id)).length;
 const porComision   = k => CONSEJERIAS.filter(c => estaPuesta(c.id, k.id)).length;
 
 const esPermanente  = k => k.grupo === 'permanente';
@@ -1153,10 +1182,11 @@ const porConsejeriaPermanentes = c => COMISIONES.filter(k => cuentaLimite(k) && 
 /* Total REAL de permanentes que integra, incluyendo Verificación de Integridad.
    Solo se usa para MOSTRAR el conteo (quien integre Verificación aparece con 5);
    el límite de 4 se valida con porConsejeriaPermanentes (que excluye Verificación). */
-const porConsejeriaPermanentesReal = c => COMISIONES.filter(k => esPermanente(k) && estaPuesta(c.id, k.id)).length;
+const porConsejeriaPermanentesReal = c => COMISIONES.filter(k => esPermanente(k) && computa(k) && estaPuesta(c.id, k.id)).length;
 /* Temporales y otros órganos que integra (columna derecha de "Total
-   comisiones"). No tienen tope por consejería: es sólo la suma. */
-const porConsejeriaTemporales = c => COMISIONES.filter(k => !esPermanente(k) && estaPuesta(c.id, k.id)).length;
+   comisiones"). No tienen tope por consejería: es sólo la suma. Las comisiones
+   en decisión (noComputa) quedan fuera: se ven en la matriz, pero no suman. */
+const porConsejeriaTemporales = c => COMISIONES.filter(k => !esPermanente(k) && computa(k) && estaPuesta(c.id, k.id)).length;
 
 /* Suma general al pie de la tabla: cuántas designaciones hay en total en las
    permanentes y cuántas en temporales y otros órganos. */
@@ -1235,7 +1265,14 @@ function presidenciaHeredadaInconsistente(k){
        que no formaba parte de la composición anterior.
    No aplican cuando la comisión no tiene composición comparable en el
    acuerdo (comparacion:'no-comparable', Punto 8) ni en las bloqueadas
-   (comparacion:'excepcion', Punto 9). ------------------------------------- */
+   (comparacion:'excepcion', Punto 9).
+
+   Excepción aparte, sólo para la rotación (refrendoPresidencia): las
+   comisiones cuya presidencia cambió en el acuerdo de abril —Fiscalización
+   y Servicio Profesional Electoral Nacional— no la refrendaron por un año
+   completo, así que todavía no les toca rotar y pueden refrendar a quien
+   preside, aunque al final acumule más de un año. En ellas la renovación
+   mínima SÍ se sigue verificando. ------------------------------------------ */
 const comparacionAplica = k => (k.comparacion || 'aplica') === 'aplica';
 function baseMiembros(k){
   return new Set(Object.keys(INTEGRACION_VIGENTE).filter(idC =>
@@ -1248,7 +1285,7 @@ function basePresidente(k){
 }
 const miembrosActuales = k => new Set(CONSEJERIAS.filter(c => estaPuesta(c.id, k.id)).map(c => c.id));
 
-const rotacionAplica   = k => comparacionAplica(k) && basePresidente(k) !== null;
+const rotacionAplica   = k => comparacionAplica(k) && !k.refrendoPresidencia && basePresidente(k) !== null;
 const renovacionAplica = k => comparacionAplica(k) && baseMiembros(k).size > 0;
 function rotacionOK(k){
   if(!rotacionAplica(k)) return true;
@@ -1337,6 +1374,8 @@ function construir(){
       '<span class="regla">' + reglaTexto(k) + '</span>' +
       (k.bloqueada ? '<span class="nueva">integración bloqueada</span>' : '') +
       (k.autoPresi ? '<span class="nueva">preside quien presida Capacitación</span>' : '') +
+      (k.refrendoPresidencia ? '<span class="nueva">presidencia refrendable · sin rotación</span>' : '') +
+      (k.noComputa ? '<span class="nueva">en decisión · no suma a los totales</span>' : '') +
       (k.nota ? '<span class="nueva">' + k.nota + '</span>' : '') +
     '</th>').join('');
 
@@ -1440,11 +1479,12 @@ const porConsejeriaPermanentesInteres = c =>
   COMISIONES.filter(k => cuentaLimite(k) && esInteresado(c.id, k)).length;
 /* Conteos que se muestran en "Total comisiones" durante la expresión de
    intereses: permanentes incluye Verificación de Integridad (que no cuenta para
-   el límite, pero sí es una comisión permanente). */
+   el límite, pero sí es una comisión permanente). Las comisiones en decisión
+   (noComputa) quedan fuera de ambos, igual que en la integración real. */
 const porConsejeriaPermanentesInteresReal = c =>
-  COMISIONES.filter(k => esPermanente(k) && esInteresado(c.id, k)).length;
+  COMISIONES.filter(k => esPermanente(k) && computa(k) && esInteresado(c.id, k)).length;
 const porConsejeriaTemporalesInteres = c =>
-  COMISIONES.filter(k => !esPermanente(k) && esInteresado(c.id, k)).length;
+  COMISIONES.filter(k => !esPermanente(k) && computa(k) && esInteresado(c.id, k)).length;
 
 /* Validación en modo intereses: mismas reglas que la verificación, pero el tope
    de integrantes sólo advierte (no bloquea). La presidencia son propuestas y
@@ -1598,7 +1638,7 @@ function pintarIntereses(){
   document.getElementById('detalle').textContent =
     totalInt + ' intereses de ' + participan + ' consejerías · el tope de integrantes sólo advierte' +
     (rebasan ? ' · ' + rebasan + ' rebasa' + (rebasan > 1 ? 'n' : '') + ' el límite de ' + MAX_POR_CONSEJERIA : '') +
-    ' · pulse «Resumen / iniciar debate»';
+    ' · pulse «Hallazgos»';
 }
 
 function pintar(){
@@ -2063,28 +2103,102 @@ function limpiarIntereses(){
 /* Resumen de intereses por comisión — punto de partida del debate. Muestra el
    conteo frente al cupo y todas las advertencias (paridad, presidencia,
    rotación, renovación); el tope sólo advierte, no invalida. */
-function verResumenIntereses(){
+/* Datos de los hallazgos: una entrada por comisión (quiénes la quieren, el
+   conteo frente al cupo y sus advertencias) más los totales. Lo comparten la
+   pantalla y la versión imprimible, para que no puedan desincronizarse. */
+function datosHallazgos(){
   const filas = COMISIONES.map(k => {
     const interesados = CONSEJERIAS.filter(c => interesPuesto(c.id, k.id));
-    const n = interesados.length;
     const probs = problemasInteres(k);
-    const ok = probs.length === 0;
-    const nombres = interesados.map(c => c.nombre + (proponePresi(c.id, k.id) ? ' <b>(presidencia)</b>' : '')).join(', ') || '—';
-    return '<div class="regla"><h3>' + k.nombre +
-      '<span class="' + (ok ? 'aplica' : 'aplica no') + '">' + n + ' / ' + reglaTexto(k) + ' · ' +
-      (ok ? 'en regla' : probs.join(' · ')) + '</span></h3>' +
-      '<p>' + nombres + '</p></div>';
-  }).join('');
-  const enRegla = COMISIONES.filter(k => problemasInteres(k).length === 0).length;
-  const rebasan = CONSEJERIAS.filter(c => porConsejeriaPermanentesInteres(c) > MAX_POR_CONSEJERIA);
+    return {
+      nombre:   k.nombre,
+      cupo:     reglaTexto(k),
+      n:        interesados.length,
+      ok:       probs.length === 0,
+      estado:   probs.length ? probs.join(' · ') : 'en regla',
+      personas: interesados.map(c => ({ nombre: c.nombre, presi: proponePresi(c.id, k.id) }))
+    };
+  });
+  return {
+    filas:   filas,
+    enRegla: filas.filter(f => f.ok).length,
+    total:   COMISIONES.length,
+    rebasan: CONSEJERIAS.filter(c => porConsejeriaPermanentesInteres(c) > MAX_POR_CONSEJERIA).map(c => c.nombre)
+  };
+}
+
+function verResumenIntereses(){
+  const d0 = datosHallazgos();
+  const filas = d0.filas.map(f =>
+    '<div class="regla"><h3>' + f.nombre +
+      '<span class="' + (f.ok ? 'aplica' : 'aplica no') + '">' + f.n + ' / ' + f.cupo + ' · ' +
+      f.estado + '</span></h3>' +
+      '<p>' + (f.personas.map(p => p.nombre + (p.presi ? ' <b>(presidencia)</b>' : '')).join(', ') || '—') +
+    '</p></div>').join('');
   document.getElementById('resumenCuerpo').innerHTML =
-    '<p style="margin:0 0 12px;font-size:13px;color:#42464f">' + enRegla + ' de ' + COMISIONES.length +
+    '<p style="margin:0 0 12px;font-size:13px;color:#42464f">' + d0.enRegla + ' de ' + d0.total +
     ' comisiones cumplirían todas las reglas con los intereses actuales' +
-    (rebasan.length ? '. Rebasan el límite de ' + MAX_POR_CONSEJERIA + ' permanentes: <b>' +
-      rebasan.map(c => c.nombre).join(', ') + '</b>' : '') +
+    (d0.rebasan.length ? '. Rebasan el límite de ' + MAX_POR_CONSEJERIA + ' permanentes: <b>' +
+      d0.rebasan.join(', ') + '</b>' : '') +
     '. El número es cuántas la quieren frente a su cupo; el tope sólo advierte. No modifica la integración real.</p>' + filas;
   const d = document.getElementById('resumen');
   if(d.showModal) d.showModal(); else d.setAttribute('open','');
+}
+
+/* Versión imprimible de los hallazgos. Se abre en una ventana aparte, igual que
+   el reporte: el CSS de impresión de la matriz oculta los diálogos, así que
+   imprimir desde aquí sacaría la matriz en vez de esta pantalla. */
+function imprimirHallazgos(){
+  const d0 = datosHallazgos();
+  const hoy = new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
+
+  const cuerpo = d0.filas.map(f =>
+    '<tr>' +
+      '<td class="com">' + f.nombre + '</td>' +
+      '<td class="cupo">' + f.n + ' / ' + f.cupo + '</td>' +
+      '<td class="' + (f.ok ? 'ok' : 'no') + '">' + f.estado + '</td>' +
+      '<td class="pers">' +
+        (f.personas.map(p => p.presi ? '<b>' + p.nombre + '</b> (presidencia)' : p.nombre).join(', ') || '—') +
+      '</td>' +
+    '</tr>').join('');
+
+  const doc =
+    '<!doctype html><html lang="es"><head><meta charset="utf-8">' +
+    '<title>Hallazgos — Expresión de intereses · ' + hoy + '</title><style>' +
+    '@page{size:letter portrait;margin:12mm}' +
+    '*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    'body{font-family:Arial,Helvetica,sans-serif;color:#222;margin:0;padding:18px}' +
+    'h1{font-size:15px;margin:0 0 2px}.sub{font-size:11px;color:#555;margin:0 0 10px}' +
+    '.resumen{font-size:11px;margin:0 0 12px;padding:8px 10px;background:#efeaf5;border-left:4px solid #4a2c6d}' +
+    'table{border-collapse:collapse;width:100%;font-size:10px}' +
+    'th,td{border:1px solid #cfcfd6;padding:5px 6px;text-align:left;vertical-align:top}' +
+    'thead th{background:#4a2c6d;color:#fff}' +
+    'tr{page-break-inside:avoid}' +
+    'td.com{font-weight:bold;width:26%}' +
+    'td.cupo{text-align:center;white-space:nowrap;width:9%}' +
+    'td.ok{color:#1b6b3a;width:20%}td.no{color:#a80063;font-weight:bold;width:20%}' +
+    '.pie{margin-top:12px;font-size:9px;color:#666}' +
+    '</style></head><body>' +
+    '<h1>Hallazgos — Expresión de intereses</h1>' +
+    '<p class="sub">Integración de Comisiones INE · Base: Acuerdo INE/CG241/2026 · Versión ' +
+      VERSION + ' · Generado el ' + hoy + '</p>' +
+    '<p class="resumen"><b>' + d0.enRegla + ' de ' + d0.total +
+      '</b> comisiones cumplirían todas las reglas con los intereses actuales' +
+      (d0.rebasan.length ? '.<br>Rebasan el límite de ' + MAX_POR_CONSEJERIA + ' permanentes: <b>' +
+        d0.rebasan.join(', ') + '</b>' : '') + '.</p>' +
+    '<table><thead><tr><th>Comisión</th><th>Interés / cupo</th><th>Estado</th>' +
+      '<th>Consejerías interesadas</th></tr></thead><tbody>' + cuerpo + '</tbody></table>' +
+    '<p class="pie">El número es cuántas consejerías quieren la comisión frente a su cupo; el tope de ' +
+    'integrantes sólo advierte, no invalida. La expresión de intereses es una capa aparte: no modifica ' +
+    'la integración real, la verificación ni el reporte.</p>' +
+    '</body></html>';
+
+  const w = window.open('', '_blank');
+  if(!w) return mostrarAviso('El navegador bloqueó la ventana; permita las ventanas emergentes.');
+  w.document.write(doc);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 350);
 }
 function cerrarResumen(){
   const d = document.getElementById('resumen');
@@ -2139,7 +2253,7 @@ function volcarIntereses(){
     return mostrarAviso('No se puede volcar: ' + pendientes.length + ' comisión' +
       (pendientes.length > 1 ? 'es' : '') + ' aún no cumple' + (pendientes.length > 1 ? 'n' : '') +
       ' (' + pendientes.slice(0,3).map(k => k.nombre).join(', ') + (pendientes.length > 3 ? '…' : '') +
-      '). Vea el detalle en «Resumen».');
+      '). Vea el detalle en «Hallazgos».');
 
   if(!confirm('Todas las comisiones cumplen. Se REEMPLAZARÁ la integración actual con los intereses ' +
               'expresados (las bloqueadas conservan su integración) y luego se verifica cada una. ¿Continuar?')) return;
@@ -2177,11 +2291,13 @@ function generarReporte(){
     cuerpo += '<tr class="grupo"><td class="com" colspan="' + (cols.length + 1) + '">' +
               GRUPOS[g].toUpperCase() + '</td></tr>';
     coms.forEach(k => {
-      let fila = '<tr><td class="com">' + k.nombre + (k.bloqueada ? ' *' : '') + '</td>';
+      let fila = '<tr><td class="com">' + k.nombre + (k.bloqueada ? ' *' : '') +
+                 (k.noComputa ? ' †' : '') + '</td>';
       cols.forEach(c => {
         const puesta  = estaPuesta(c.id, k.id);
         const preside = puesta && presidenteActual(k) === c.id;
-        if(puesta){ sub[c.id]++; gran[c.id]++; }
+        /* Las comisiones en decisión se muestran, pero no suman a los totales. */
+        if(puesta && computa(k)){ sub[c.id]++; gran[c.id]++; }
         fila += '<td class="' + (preside ? 'presi' : '') + '">' + (puesta ? 'X' : '') + '</td>';
       });
       cuerpo += fila + '</tr>';
@@ -2244,6 +2360,9 @@ function generarReporte(){
     '<tbody>' + cuerpo + '</tbody></table>' +
     prelHTML +
     '<p class="pie">* Integración bloqueada (comisión temporal inmutable). ' +
+    (COMISIONES.some(k => k.noComputa)
+      ? '† Comisión en decisión (continúa o se extingue): se muestra su integración, pero no suma a los totales ni al gran total. '
+      : '') +
     'El orden de prelación de suplencias no cuenta como integración ni para el límite de comisiones.</p>' +
     '</body></html>';
 

@@ -1,0 +1,811 @@
+{
+  "esquema": "Historial de integraciones de las comisiones permanentes del Consejo General del INE",
+  "generado": "2026-08-24",
+  "fuente": "Radiografía verificada contra el texto primario de cada acuerdo (INE/CG172/2020 … INE/CG241/2026).",
+  "referencias": {
+    "presidencia": "ultimo",
+    "integracion": "INE/CG532/2023",
+    "nota": "La presidencia rota cada año: se compara contra el último corte. La integración rota al menos cada tres años: se compara contra el corte de hace tres años. Un cambio cuenta lo mismo si alguien entra que si alguien sale."
+  },
+  "consejeriasHistoricas": {
+    "zavala": "Zavala Pérez",
+    "ravel": "Ravel Cuevas",
+    "ruiz": "Ruiz Saldaña",
+    "rivera": "Rivera Velázquez",
+    "favela": "Favela Herrera",
+    "murayama": "Murayama Rendón"
+  },
+  "cortes": [
+    {
+      "fecha": "2020-07-30",
+      "acuerdo": "INE/CG172/2020",
+      "integracion": {
+        "capacitacion": {
+          "p": "faz",
+          "m": [
+            "zavala",
+            "ravel",
+            "ruiz",
+            "faz"
+          ]
+        },
+        "organizacion": {
+          "p": "rivera",
+          "m": [
+            "rivera",
+            "delacruz",
+            "humphrey"
+          ]
+        },
+        "prerrogativas": {
+          "p": "zavala",
+          "m": [
+            "zavala",
+            "ravel",
+            "favela",
+            "espadas",
+            "faz"
+          ]
+        },
+        "servicio": {
+          "p": "zavala",
+          "m": [
+            "zavala",
+            "murayama",
+            "delacruz"
+          ]
+        },
+        "registro": {
+          "p": "espadas",
+          "m": [
+            "ruiz",
+            "rivera",
+            "murayama",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "quejas": {
+          "p": "murayama",
+          "m": [
+            "zavala",
+            "favela",
+            "murayama"
+          ]
+        },
+        "fiscalizacion": {
+          "p": "favela",
+          "m": [
+            "rivera",
+            "favela",
+            "murayama",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "ople": {
+          "p": "rivera",
+          "m": [
+            "ravel",
+            "rivera",
+            "delacruz",
+            "faz"
+          ]
+        },
+        "igualdad": {
+          "p": "humphrey",
+          "m": [
+            "ravel",
+            "favela",
+            "delacruz",
+            "faz",
+            "humphrey"
+          ]
+        }
+      }
+    },
+    {
+      "fecha": "2021-09-01",
+      "acuerdo": "INE/CG1494/2021",
+      "integracion": {
+        "capacitacion": {
+          "p": "faz",
+          "m": [
+            "zavala",
+            "ravel",
+            "ruiz",
+            "faz"
+          ]
+        },
+        "organizacion": {
+          "p": "humphrey",
+          "m": [
+            "rivera",
+            "delacruz",
+            "humphrey"
+          ]
+        },
+        "prerrogativas": {
+          "p": "espadas",
+          "m": [
+            "zavala",
+            "ravel",
+            "favela",
+            "espadas",
+            "faz"
+          ]
+        },
+        "servicio": {
+          "p": "murayama",
+          "m": [
+            "zavala",
+            "murayama",
+            "delacruz"
+          ]
+        },
+        "registro": {
+          "p": "murayama",
+          "m": [
+            "ruiz",
+            "rivera",
+            "murayama",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "quejas": {
+          "p": "favela",
+          "m": [
+            "zavala",
+            "favela",
+            "murayama"
+          ]
+        },
+        "fiscalizacion": {
+          "p": "rivera",
+          "m": [
+            "rivera",
+            "favela",
+            "murayama",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "ople": {
+          "p": "ravel",
+          "m": [
+            "ravel",
+            "rivera",
+            "delacruz",
+            "faz"
+          ]
+        },
+        "igualdad": {
+          "p": "delacruz",
+          "m": [
+            "ravel",
+            "favela",
+            "delacruz",
+            "faz",
+            "humphrey"
+          ]
+        }
+      }
+    },
+    {
+      "fecha": "2022-09-07",
+      "acuerdo": "INE/CG619/2022",
+      "nota": "prórroga, sin cambios",
+      "integracion": {
+        "capacitacion": {
+          "p": "faz",
+          "m": [
+            "zavala",
+            "ravel",
+            "ruiz",
+            "faz"
+          ]
+        },
+        "organizacion": {
+          "p": "humphrey",
+          "m": [
+            "rivera",
+            "delacruz",
+            "humphrey"
+          ]
+        },
+        "prerrogativas": {
+          "p": "espadas",
+          "m": [
+            "zavala",
+            "ravel",
+            "favela",
+            "espadas",
+            "faz"
+          ]
+        },
+        "servicio": {
+          "p": "murayama",
+          "m": [
+            "zavala",
+            "murayama",
+            "delacruz"
+          ]
+        },
+        "registro": {
+          "p": "murayama",
+          "m": [
+            "ruiz",
+            "rivera",
+            "murayama",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "quejas": {
+          "p": "favela",
+          "m": [
+            "zavala",
+            "favela",
+            "murayama"
+          ]
+        },
+        "fiscalizacion": {
+          "p": "rivera",
+          "m": [
+            "rivera",
+            "favela",
+            "murayama",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "ople": {
+          "p": "ravel",
+          "m": [
+            "ravel",
+            "rivera",
+            "delacruz",
+            "faz"
+          ]
+        },
+        "igualdad": {
+          "p": "delacruz",
+          "m": [
+            "ravel",
+            "favela",
+            "delacruz",
+            "faz",
+            "humphrey"
+          ]
+        }
+      }
+    },
+    {
+      "fecha": "2023-04-10",
+      "acuerdo": "INE/CG257/2023",
+      "integracion": {
+        "capacitacion": {
+          "p": "ravel",
+          "m": [
+            "zavala",
+            "ravel",
+            "faz",
+            "montano"
+          ]
+        },
+        "organizacion": {
+          "p": "rivera",
+          "m": [
+            "rivera",
+            "delacruz",
+            "humphrey"
+          ]
+        },
+        "prerrogativas": {
+          "p": "faz",
+          "m": [
+            "zavala",
+            "ravel",
+            "castillo",
+            "espadas",
+            "faz"
+          ]
+        },
+        "servicio": {
+          "p": "zavala",
+          "m": [
+            "zavala",
+            "delacruz",
+            "lopezv"
+          ]
+        },
+        "registro": {
+          "p": "humphrey",
+          "m": [
+            "rivera",
+            "castillo",
+            "espadas",
+            "humphrey",
+            "montano"
+          ]
+        },
+        "quejas": {
+          "p": "zavala",
+          "m": [
+            "zavala",
+            "lopezv",
+            "montano"
+          ]
+        },
+        "fiscalizacion": {
+          "p": "espadas",
+          "m": [
+            "rivera",
+            "castillo",
+            "espadas",
+            "humphrey",
+            "lopezv"
+          ]
+        },
+        "ople": {
+          "p": "delacruz",
+          "m": [
+            "ravel",
+            "rivera",
+            "delacruz",
+            "faz"
+          ]
+        },
+        "igualdad": {
+          "p": "ravel",
+          "m": [
+            "ravel",
+            "faz",
+            "humphrey",
+            "lopezv"
+          ]
+        }
+      }
+    },
+    {
+      "fecha": "2023-09-08",
+      "acuerdo": "INE/CG532/2023",
+      "integracion": {
+        "capacitacion": {
+          "p": "delacruz",
+          "m": [
+            "zavala",
+            "rivera",
+            "delacruz",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "organizacion": {
+          "p": "rivera",
+          "m": [
+            "ravel",
+            "rivera",
+            "faz"
+          ]
+        },
+        "prerrogativas": {
+          "p": "espadas",
+          "m": [
+            "ravel",
+            "castillo",
+            "delacruz",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "servicio": {
+          "p": "lopezv",
+          "m": [
+            "zavala",
+            "espadas",
+            "faz",
+            "lopezv"
+          ]
+        },
+        "registro": {
+          "p": "humphrey",
+          "m": [
+            "rivera",
+            "castillo",
+            "delacruz",
+            "humphrey",
+            "montano"
+          ]
+        },
+        "quejas": {
+          "p": "zavala",
+          "m": [
+            "zavala",
+            "castillo",
+            "lopezv"
+          ]
+        },
+        "fiscalizacion": {
+          "p": "montano",
+          "m": [
+            "ravel",
+            "rivera",
+            "espadas",
+            "humphrey",
+            "montano"
+          ]
+        },
+        "ople": {
+          "p": "ravel",
+          "m": [
+            "ravel",
+            "delacruz",
+            "faz",
+            "montano"
+          ]
+        },
+        "igualdad": {
+          "p": "lopezv",
+          "m": [
+            "zavala",
+            "castillo",
+            "lopezv",
+            "montano"
+          ]
+        }
+      }
+    },
+    {
+      "fecha": "2024-09-05",
+      "acuerdo": "INE/CG2211/2024",
+      "integracion": {
+        "capacitacion": {
+          "p": "delacruz",
+          "m": [
+            "zavala",
+            "rivera",
+            "delacruz",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "organizacion": {
+          "p": "rivera",
+          "m": [
+            "ravel",
+            "rivera",
+            "faz"
+          ]
+        },
+        "prerrogativas": {
+          "p": "ravel",
+          "m": [
+            "ravel",
+            "castillo",
+            "delacruz",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "servicio": {
+          "p": "espadas",
+          "m": [
+            "zavala",
+            "espadas",
+            "faz",
+            "lopezv"
+          ]
+        },
+        "registro": {
+          "p": "castillo",
+          "m": [
+            "rivera",
+            "castillo",
+            "delacruz",
+            "humphrey",
+            "montano"
+          ]
+        },
+        "quejas": {
+          "p": "lopezv",
+          "m": [
+            "zavala",
+            "castillo",
+            "lopezv"
+          ]
+        },
+        "fiscalizacion": {
+          "p": "humphrey",
+          "m": [
+            "ravel",
+            "rivera",
+            "espadas",
+            "humphrey",
+            "montano"
+          ]
+        },
+        "ople": {
+          "p": "faz",
+          "m": [
+            "ravel",
+            "delacruz",
+            "faz",
+            "montano"
+          ]
+        },
+        "igualdad": {
+          "p": "zavala",
+          "m": [
+            "zavala",
+            "castillo",
+            "lopezv",
+            "montano"
+          ]
+        }
+      }
+    },
+    {
+      "fecha": "2025-08-28",
+      "acuerdo": "INE/CG1133/2025",
+      "integracion": {
+        "capacitacion": {
+          "p": "espadas",
+          "m": [
+            "zavala",
+            "rivera",
+            "delacruz",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "organizacion": {
+          "p": "faz",
+          "m": [
+            "ravel",
+            "rivera",
+            "faz"
+          ]
+        },
+        "prerrogativas": {
+          "p": "delacruz",
+          "m": [
+            "ravel",
+            "castillo",
+            "delacruz",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "servicio": {
+          "p": "zavala",
+          "m": [
+            "zavala",
+            "espadas",
+            "faz",
+            "lopezv"
+          ]
+        },
+        "registro": {
+          "p": "humphrey",
+          "m": [
+            "rivera",
+            "castillo",
+            "delacruz",
+            "humphrey",
+            "montano"
+          ]
+        },
+        "quejas": {
+          "p": "castillo",
+          "m": [
+            "zavala",
+            "castillo",
+            "lopezv"
+          ]
+        },
+        "fiscalizacion": {
+          "p": "rivera",
+          "m": [
+            "ravel",
+            "rivera",
+            "espadas",
+            "humphrey",
+            "montano"
+          ]
+        },
+        "ople": {
+          "p": "montano",
+          "m": [
+            "ravel",
+            "delacruz",
+            "faz",
+            "montano"
+          ]
+        },
+        "igualdad": {
+          "p": "lopezv",
+          "m": [
+            "zavala",
+            "castillo",
+            "lopezv",
+            "montano"
+          ]
+        }
+      }
+    },
+    {
+      "fecha": "2026-04-07",
+      "acuerdo": "INE/CG182/2026",
+      "nota": "temporal, por vacancia",
+      "integracion": {
+        "capacitacion": {
+          "p": "espadas",
+          "m": [
+            "delacruz",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "organizacion": {
+          "p": "faz",
+          "m": [
+            "delacruz",
+            "espadas",
+            "faz",
+            "humphrey"
+          ]
+        },
+        "prerrogativas": {
+          "p": "delacruz",
+          "m": [
+            "castillo",
+            "delacruz",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "servicio": {
+          "p": "faz",
+          "m": [
+            "espadas",
+            "faz",
+            "lopezv"
+          ]
+        },
+        "registro": {
+          "p": "humphrey",
+          "m": [
+            "castillo",
+            "delacruz",
+            "humphrey",
+            "montano"
+          ]
+        },
+        "quejas": {
+          "p": "castillo",
+          "m": [
+            "castillo",
+            "lopezv",
+            "montano"
+          ]
+        },
+        "fiscalizacion": {
+          "p": "espadas",
+          "m": [
+            "espadas",
+            "faz",
+            "humphrey",
+            "montano"
+          ]
+        },
+        "ople": {
+          "p": "montano",
+          "m": [
+            "delacruz",
+            "faz",
+            "lopezv",
+            "montano"
+          ]
+        },
+        "igualdad": {
+          "p": "lopezv",
+          "m": [
+            "castillo",
+            "lopezv",
+            "montano"
+          ]
+        }
+      }
+    },
+    {
+      "fecha": "2026-04-27",
+      "acuerdo": "INE/CG241/2026",
+      "integracion": {
+        "capacitacion": {
+          "p": "espadas",
+          "m": [
+            "chavez",
+            "delacruz",
+            "espadas",
+            "gomez",
+            "humphrey"
+          ]
+        },
+        "organizacion": {
+          "p": "faz",
+          "m": [
+            "chavez",
+            "cruzg",
+            "faz"
+          ]
+        },
+        "prerrogativas": {
+          "p": "delacruz",
+          "m": [
+            "castillo",
+            "chavez",
+            "delacruz",
+            "espadas",
+            "humphrey"
+          ]
+        },
+        "servicio": {
+          "p": "faz",
+          "m": [
+            "espadas",
+            "faz",
+            "lopezv"
+          ]
+        },
+        "registro": {
+          "p": "humphrey",
+          "m": [
+            "castillo",
+            "cruzg",
+            "delacruz",
+            "humphrey",
+            "montano"
+          ]
+        },
+        "quejas": {
+          "p": "castillo",
+          "m": [
+            "castillo",
+            "gomez",
+            "lopezv"
+          ]
+        },
+        "fiscalizacion": {
+          "p": "espadas",
+          "m": [
+            "chavez",
+            "espadas",
+            "gomez",
+            "humphrey",
+            "montano"
+          ]
+        },
+        "ople": {
+          "p": "montano",
+          "m": [
+            "cruzg",
+            "delacruz",
+            "faz",
+            "montano"
+          ]
+        },
+        "igualdad": {
+          "p": "lopezv",
+          "m": [
+            "castillo",
+            "gomez",
+            "lopezv",
+            "montano"
+          ]
+        }
+      }
+    }
+  ]
+}

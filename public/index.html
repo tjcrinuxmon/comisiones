@@ -491,23 +491,27 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
     </div>
 
     <div class="regla">
-      <h3>Rotación y renovación <span class="art">Art. 11 RC · INE/CG241/2026</span><span class="aplica">la matriz lo verifica</span></h3>
-      <p>El periodo de la presidencia dura un año y es rotativo. Con base en el Acuerdo INE/CG241/2026,
-      respecto de la composición anterior la nueva integración debe:</p>
+      <h3>Rotación <span class="art">Art. 11 RC · INE/CG241/2026</span><span class="aplica">la matriz lo verifica</span></h3>
+      <p>Son <b>dos reglas independientes</b>, con periodo y referencia distintos. La matriz las
+      contrasta contra el <b>historial de integraciones 2020-2026</b>, que incluye a las consejerías
+      que ya concluyeron su periodo.</p>
       <ul>
-        <li>Rotación: la presidencia debe recaer en una persona distinta.</li>
-        <li>Renovación mínima: debe incorporarse al menos una persona que no formaba parte de la
-        integración anterior.</li>
+        <li><b>Presidencia — cada año.</b> El periodo de la presidencia dura un año, así que debe
+        recaer en una persona distinta a la del acuerdo más reciente (INE/CG241/2026).</li>
+        <li><b>Integración — al menos cada tres años.</b> Respecto de la integración de hace tres
+        años (INE/CG532/2023) debe haber cambiado al menos una persona. Cuenta igual que
+        <b>entre</b> alguien que no estaba o que <b>salga</b> alguien que sí estaba —por ejemplo,
+        una consejería que concluyó su encargo—: en ambos casos la integración ya no es la misma.</li>
         <li>No aplican en la Comisión de Verificación de Integridad en Candidaturas ni en la de
         Capacitación y Organización Electoral (sin composición comparable en el acuerdo), ni en las
         comisiones con integración bloqueada (excepción no aplicable).</li>
       </ul>
-      <p><b>Excepción por refrendo de la presidencia.</b> En el acuerdo de abril no todas las comisiones
-      refrendaron su presidencia: <b>Fiscalización</b> y <b>Servicio Profesional Electoral Nacional</b>
-      fueron las únicas que la cambiaron. Como esas presidencias no cumplen todavía el año, en estas dos
-      comisiones <b>no se exige la rotación</b> y se puede refrendar a quien preside, aun cuando al
-      término del periodo acumule más de un año. La <b>renovación mínima sí se sigue verificando</b> en
-      ambas, igual que el resto de las reglas.</p>
+      <p><b>Excepción por refrendo de la presidencia.</b> En abril de 2026, al concluir su periodo
+      Zavala Pérez y Rivera Velázquez, cambió la presidencia de <b>Servicio Profesional Electoral
+      Nacional</b> y de <b>Fiscalización</b> — las únicas dos. Como esas presidencias no cumplen
+      todavía el año, en ellas <b>no se exige la rotación anual</b> y quien preside puede refrendar
+      si así lo desea, aun cuando al término del periodo acumule más de un año. La rotación de la
+      <b>integración sí se sigue verificando</b> en ambas, igual que en el resto.</p>
     </div>
 
     <div class="regla">
@@ -788,8 +792,13 @@ const HUELLAS_ORIGINALES = {
   tope:        '310CA263B39B76CD',
   consejerias: '748C6D2AB1698C74',
   comisiones:  '622B51DBF962ADA5',
-  vigente:     '1512ECDD113B5BC3'
+  vigente:     '1512ECDD113B5BC3',
+  historial:   '830645BE6DAECBD8'
 };
+
+/* Huella del historial que se cargó de datos/historial-comisiones.json.
+   Se calcula al leerlo (cargarHistorial) porque el archivo es externo. */
+let HUELLA_HISTORIAL = null;
 
 /* Huella FNV-1a de 64 bits en dos mitades. No es criptográfica: sirve
    para detectar alteraciones, no para impedirlas. */
@@ -811,7 +820,11 @@ function huellasActuales(){
       k.id + '~' + k.nombre + '~' + k.min + '~' + k.max + '~' + (k.nota || '')).join('|')),
     vigente: huella(Object.keys(INTEGRACION_VIGENTE).map(id => id + '~' +
       INTEGRACION_VIGENTE[id].map(a =>
-        a.comision + ':' + a.fecha + (a.presidencia ? ':P' : '')).join(',')).join('|'))
+        a.comision + ':' + a.fecha + (a.presidencia ? ':P' : '')).join(',')).join('|')),
+    /* Archivo externo: la huella se calcula al cargarlo. Si aún no se ha
+       leído queda en null y el sello lo reporta como modificado, que es lo
+       prudente: sin historial no hay comparación válida. */
+    historial: HUELLA_HISTORIAL
   };
 }
 
@@ -819,7 +832,8 @@ const SECCIONES = {
   tope:        'Límite de comisiones por consejería',
   consejerias: 'Listado de consejerías',
   comisiones:  'Comisiones, mínimos y máximos',
-  vigente:     'Integración vigente y fechas de designación'
+  vigente:     'Integración vigente y fechas de designación',
+  historial:   'Historial de integraciones 2020-2026'
 };
 
 function revisarIntegridad(){
@@ -856,8 +870,8 @@ function verIntegridad(){
 
   const resumen = alteradas.length
     ? '<p style="margin:0 0 10px;color:#b3261e;font-size:13px">Se detectaron cambios en ' +
-      alteradas.length + ' de las cuatro secciones del catálogo respecto al archivo original ' +
-      'de la versión ' + VERSION + '.</p>'
+      alteradas.length + ' de las ' + Object.keys(SECCIONES).length + ' secciones del catálogo ' +
+      'respecto al archivo original de la versión ' + VERSION + '.</p>'
     : '<p style="margin:0 0 10px;color:#1a7f4b;font-size:13px">El catálogo coincide con el archivo ' +
       'original de la versión ' + VERSION + '.</p>';
 
@@ -969,6 +983,91 @@ const INTEGRACION_VIGENTE = {
     { comision:'presupuesto',   fecha:'2026-04-27', presidencia:true }
   ]
 };
+
+/* =====================================================================
+   HISTORIAL DE INTEGRACIONES  ·  2020-2026 (nueve cortes)
+   ---------------------------------------------------------------------
+   Referencia para las DOS reglas de rotación, que son independientes:
+
+     · PRESIDENCIA — rota cada AÑO. Se compara contra el corte más
+       reciente (el último de esta lista).
+     · INTEGRACIÓN — rota al menos cada TRES AÑOS, y para cumplir debe
+       cambiar al menos una persona. Se compara contra el corte de hace
+       tres años (CORTE_INTEGRACION), no contra el más reciente.
+
+   Fuente: radiografía verificada contra el texto primario de cada
+   acuerdo. Incluye a las consejerías que YA NO están en el Consejo
+   (Zavala, Ravel, Rivera, Ruiz, Favela, Murayama): sin ellas la
+   comparación es falsa, porque su salida es justamente lo que cambió
+   la composición de varias comisiones.
+
+   Cambios del Consejo General en el periodo:
+     · jul-2020  entran De la Cruz, Humphrey, Faz y Espadas.
+     · abr-2023  salen Córdova, Favela, Murayama y Ruiz; entran
+                 López Vences, Castillo y Montaño.
+     · abr-2026  salen Ravel, Rivera y Zavala (concluyen sus nueve
+                 años); entran Chávez, Cruz García y Gómez Puga, que se
+                 integran a comisiones el 27/04/2026.
+
+   Sólo se listan las nueve permanentes con composición comparable.
+   Verificación de Integridad no aparece: se creó en 2026 y por eso está
+   marcada como 'no-comparable'. ===================================== */
+
+/* Consejerías que ya no integran el Consejo. Se llenan desde el JSON; sólo
+   sirven para leer el historial y no aparecen en la matriz ni cuentan para
+   ninguna regla. */
+let CONSEJERIAS_HISTORICAS = {};
+const nombreHistorico = id => {
+  const c = CONSEJERIAS.find(x => x.id === id);
+  return c ? c.corto : (CONSEJERIAS_HISTORICAS[id] || id);
+};
+
+/* El historial se carga de datos/historial-comisiones.json antes de dibujar
+   nada (ver arranque, al final del archivo). Se deja vacío a propósito: si la
+   carga falla, la app se detiene con un error visible en vez de seguir con las
+   reglas apagadas. */
+let HISTORIAL = [];
+let CORTE_PRESIDENCIA = null;   // rotación anual de la presidencia: último corte
+let CORTE_INTEGRACION = null;   // rotación trienal de la integración: corte de hace 3 años
+
+const RUTA_HISTORIAL = 'datos/historial-comisiones.json';
+
+/* Texto canónico del historial para la huella: mismo orden siempre, para que
+   dos lecturas del mismo archivo den idéntico resultado. */
+function textoHistorial(cortes, historicas){
+  return Object.keys(historicas).sort().map(id => id + '=' + historicas[id]).join(',') + '#' +
+    cortes.map(c => c.fecha + '~' + c.acuerdo + '~' +
+      Object.keys(c.integracion).sort().map(idK => {
+        const e = c.integracion[idK];
+        return idK + ':' + (e.p || '') + ':' + [...e.m].sort().join('+');
+      }).join(';')).join('|');
+}
+
+async function cargarHistorial(){
+  const r = await fetch(RUTA_HISTORIAL, { cache:'no-store' });
+  if(!r.ok) throw new Error('no se pudo leer ' + RUTA_HISTORIAL + ' (HTTP ' + r.status + ')');
+  const j = await r.json();
+  if(!j || !Array.isArray(j.cortes) || !j.cortes.length)
+    throw new Error(RUTA_HISTORIAL + ' no trae cortes');
+
+  HISTORIAL = j.cortes;
+  CONSEJERIAS_HISTORICAS = j.consejeriasHistoricas || {};
+
+  const ref = j.referencias || {};
+  CORTE_PRESIDENCIA = HISTORIAL[HISTORIAL.length - 1];
+  CORTE_INTEGRACION = HISTORIAL.find(c => c.acuerdo === ref.integracion);
+  if(!CORTE_INTEGRACION)
+    throw new Error('el corte de referencia para la integración (' + ref.integracion + ') no está en el historial');
+
+  /* Toda comisión comparable debe existir en ambos cortes de referencia; si
+     no, sus reglas quedarían apagadas en silencio. */
+  const faltan = COMISIONES.filter(k => comparacionAplica(k) && esPermanente(k) &&
+    !k.noComputa && !CORTE_PRESIDENCIA.integracion[k.id]).map(k => k.id);
+  if(faltan.length)
+    throw new Error('el último corte no incluye: ' + faltan.join(', '));
+
+  HUELLA_HISTORIAL = huella(textoHistorial(HISTORIAL, CONSEJERIAS_HISTORICAS));
+}
 
 /* Orden de prelación de suplencias por comisión (Art. 44.2.c del Reglamento de
    Quejas y Denuncias). Lista ordenada de consejerías suplentes; ser suplente
@@ -1257,12 +1356,16 @@ function presidenciaHeredadaInconsistente(k){
   return p !== null && !estaPuesta(p, k.id);
 }
 
-/* ---------- Composición anterior, rotación y renovación -------------------
-   La composición anterior es la integración vigente sembrada al inicio
-   (INE/CG241/2026 y acuerdos previos). Sobre ella se verifican:
-     · Rotación (Punto 6): la presidencia debe recaer en persona distinta.
-     · Renovación mínima (Punto 6): debe incorporarse al menos una persona
-       que no formaba parte de la composición anterior.
+/* ---------- Rotación de la presidencia y de la integración -----------------
+   Son DOS reglas independientes, con periodo y referencia distintos:
+
+     · PRESIDENCIA — rota cada AÑO: debe recaer en persona distinta a la del
+       corte más reciente del historial (CORTE_PRESIDENCIA).
+     · INTEGRACIÓN — rota al menos cada TRES AÑOS: respecto del corte de hace
+       tres años (CORTE_INTEGRACION) debe haber cambiado al menos una persona.
+       Cuenta igual que ENTRE alguien nuevo o que SALGA alguien que estaba: en
+       ambos casos la integración ya no es la misma.
+
    No aplican cuando la comisión no tiene composición comparable en el
    acuerdo (comparacion:'no-comparable', Punto 8) ni en las bloqueadas
    (comparacion:'excepcion', Punto 9).
@@ -1274,14 +1377,20 @@ function presidenciaHeredadaInconsistente(k){
    preside, aunque al final acumule más de un año. En ellas la renovación
    mínima SÍ se sigue verificando. ------------------------------------------ */
 const comparacionAplica = k => (k.comparacion || 'aplica') === 'aplica';
+
+/* Las dos referencias salen de HISTORIAL y son DISTINTAS a propósito:
+     · la presidencia se compara contra el corte más reciente (rotación anual);
+     · la integración, contra el de hace tres años (rotación trienal).
+   Antes ambas salían de INTEGRACION_VIGENTE, y por eso la renovación se medía
+   contra la foto de hoy: quien había entrado en abril quedaba dentro de la base
+   en vez de contar como el cambio. */
 function baseMiembros(k){
-  return new Set(Object.keys(INTEGRACION_VIGENTE).filter(idC =>
-    INTEGRACION_VIGENTE[idC].some(a => a.comision === k.id)));
+  const c = CORTE_INTEGRACION && CORTE_INTEGRACION.integracion[k.id];
+  return new Set(c ? c.m : []);
 }
 function basePresidente(k){
-  for(const idC of Object.keys(INTEGRACION_VIGENTE))
-    if(INTEGRACION_VIGENTE[idC].some(a => a.comision === k.id && a.presidencia)) return idC;
-  return null;
+  const c = CORTE_PRESIDENCIA && CORTE_PRESIDENCIA.integracion[k.id];
+  return c && c.p ? c.p : null;
 }
 const miembrosActuales = k => new Set(CONSEJERIAS.filter(c => estaPuesta(c.id, k.id)).map(c => c.id));
 
@@ -1292,10 +1401,15 @@ function rotacionOK(k){
   const p = presidenteActual(k);
   return p !== null && p !== basePresidente(k);
 }
+/* Basta con que la integración sea distinta a la de hace tres años. Se compara
+   en los dos sentidos: alguien que entró y no estaba, o alguien que estaba y ya
+   no está (p. ej. una consejería que concluyó su periodo). Cualquiera de los
+   dos es el cambio que exige la regla. */
 function renovacionOK(k){
   if(!renovacionAplica(k)) return true;
-  const base = baseMiembros(k);
-  for(const id of miembrosActuales(k)) if(!base.has(id)) return true;
+  const base = baseMiembros(k), ahora = miembrosActuales(k);
+  for(const id of ahora) if(!base.has(id)) return true;   // entró alguien nuevo
+  for(const id of base)  if(!ahora.has(id)) return true;  // salió alguien que estaba
   return false;
 }
 
@@ -1542,7 +1656,7 @@ function explicaSello(texto){
     'sin presidencia':     'Falta designar (o proponer) quién preside la comisión.',
     'varias presidencias': 'Hay más de una persona propuesta a la presidencia; debe quedar sólo una para poder volcar.',
     'sin rotación':        'La presidencia debe recaer en una persona distinta a la del periodo anterior (rotación anual · Art. 11 RC e INE/CG241/2026).',
-    'sin renovación':      'Debe incorporarse al menos una persona que no formaba parte de la integración anterior (renovación mínima · INE/CG241/2026).',
+    'sin renovación':      'La integración es idéntica a la de hace tres años (INE/CG532/2023): debe cambiar al menos una persona, ya sea que entre alguien nuevo o que salga alguien que la integraba.',
     'preside sin integrar':'Quien preside no está marcado como integrante; debe integrarse a la comisión.'
   })[t] || t;
 }
@@ -2506,12 +2620,42 @@ async function intentarReanudar(){
   }catch(e){}
 }
 
-/* ===================================================================== */
-construir();
-pintarSello();
-llenarPortada();
-intentarReanudar();
-setInterval(sondear, 3000);
+/* =====================================================================
+   ARRANQUE
+   El historial es requisito, no adorno: sin él, rotacionAplica y
+   renovacionAplica devolverían false y TODAS las comisiones pasarían esas dos
+   reglas sin verificarlas. Por eso se carga primero y, si falla, la aplicación
+   se detiene con un error a la vista en lugar de arrancar con las reglas
+   apagadas en silencio. ================================================== */
+function fallaArranque(e){
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#fff;padding:32px;' +
+    'font:14px/1.6 system-ui,Arial,sans-serif;color:#222;overflow:auto';
+  d.innerHTML =
+    '<h1 style="font-size:18px;color:#b3261e;margin:0 0 10px">No se pudo iniciar la matriz</h1>' +
+    '<p style="margin:0 0 10px">No se pudo cargar <b>' + RUTA_HISTORIAL + '</b>, que contiene el ' +
+    'historial de integraciones 2020-2026. Ese archivo es la referencia con la que se verifican ' +
+    'la rotación de la presidencia y la de la integración.</p>' +
+    '<p style="margin:0 0 10px">La aplicación <b>no arranca sin él</b> a propósito: si continuara, ' +
+    'esas dos reglas quedarían apagadas y todas las comisiones parecerían cumplirlas.</p>' +
+    '<p style="margin:0 0 16px;color:#666">Detalle: ' + (e && e.message ? e.message : e) + '</p>' +
+    '<button onclick="location.reload()" style="padding:8px 14px;font-size:14px;cursor:pointer">Reintentar</button>';
+  document.body.appendChild(d);
+}
+
+(async function arrancar(){
+  try{
+    await cargarHistorial();
+  }catch(e){
+    console.error('Historial:', e);
+    return fallaArranque(e);
+  }
+  construir();
+  pintarSello();
+  llenarPortada();
+  intentarReanudar();
+  setInterval(sondear, 3000);
+})();
 </script>
 </body>
 </html>

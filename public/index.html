@@ -156,7 +156,12 @@ td.total{
   color:var(--tenue);background:#fbfbfc;
 }
 td.total.total-perm{border-left:2px solid var(--linea)}
-td.total.lleno{color:var(--ok)}
+/* Tres niveles en el total de permanentes:
+     hasta 4  → normal (lo que prevé el Art. 42.2 LGIPE)
+     5 justas → ámbar: es el límite que admite la matriz, pero exige
+                justificación legal para sostenerse
+     6 o más  → rojo: rebasa                                            */
+td.total.lleno{color:var(--falta);background:var(--falta-bg)}
 td.total.excedido{color:var(--excede);background:var(--excede-bg)}
 
 tfoot td{
@@ -175,6 +180,10 @@ tfoot .sello{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px
 .sello.falta{background:var(--falta-bg);color:var(--falta)}
 .sello.excede{background:var(--excede-bg);color:var(--excede)}
 .sello.bloqueada{background:#e7e8ec;color:var(--tenue)}
+/* Advertencia que informa pero no invalida (p. ej. rebasar el límite de
+   permanentes): contorno ámbar, para distinguirla de los sellos que sí
+   impiden verificar. */
+.sello.aviso{background:transparent;color:var(--falta);border:1px dashed currentColor;margin-left:4px}
 .sello[title]{cursor:help}
 
 /* Botón de verificación por comisión (regla "Importante") */
@@ -515,12 +524,22 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
     </div>
 
     <div class="regla">
-      <h3>Límite de participación <span class="art">Art. 42.2 LGIPE</span><span class="aplica">la matriz lo verifica</span></h3>
-      <p>Las consejerías pueden participar hasta en cuatro comisiones <b>permanentes</b> por un periodo
-      de tres años. Las comisiones temporales y otros órganos no cuentan para ese límite.</p>
-      <p>La Comisión de <b>Verificación de Integridad en Candidaturas</b> ya fue integrada (30/07/2026) y
-      constituye una <b>excepción al tope</b>: <b>no cuenta</b> para el límite de cuatro. Quienes la integran
-      pueden ocupar hasta <b>cuatro permanentes más</b> (cinco en total).</p>
+      <h3>Límite de participación <span class="art">Art. 42.2 LGIPE</span><span class="aplica">la matriz lo advierte</span></h3>
+      <p>El Art. 42.2 de la LGIPE prevé que las consejerías participen hasta en <b>cuatro</b> comisiones
+      <b>permanentes</b> por un periodo de tres años. Las comisiones temporales y otros órganos no
+      cuentan para ese límite. <b>Todas</b> las permanentes cuentan, incluida la de Verificación de
+      Integridad en Candidaturas.</p>
+      <p>La matriz señala tres niveles en la columna «Total comisiones»:</p>
+      <ul>
+        <li><b>Hasta 4</b> — sin marca: es lo previsto en la ley y el resultado deseable del consenso.</li>
+        <li><b>Exactamente 5</b> — en <b>ámbar</b>: la matriz lo admite, pero sostener más de cuatro
+        <b>requiere justificación legal</b>.</li>
+        <li><b>6 o más</b> — en <b>rojo</b>: rebasa el límite. Además se avisa al marcar y la comisión
+        lleva el sello <b>«rebasa el tope»</b> al pie.</li>
+      </ul>
+      <p>En ningún caso se <b>impide</b> la asignación, para no trabar la discusión: la verificación y la
+      conclusión no se bloquean. El exceso queda a la vista como decisión consciente de quien integra,
+      no como un descuido del sistema.</p>
     </div>
 
     <div class="regla">
@@ -528,9 +547,10 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
       <p>El botón «Expresar intereses» abre una capa aparte donde cada consejería marca libremente las
       comisiones que le interesan, indicando si va como integrante o proponiéndose a la presidencia
       (pueden proponerse varias). Ahí se advierten <b>todas</b> las reglas (paridad, presidencia,
-      rotación, renovación y el límite de cuatro) — la <b>única</b> diferencia es que el tope de
-      integrantes sólo advierte, no bloquea. Con «Volcar intereses → integración» se traslada a la
-      integración real (reemplazándola) para depurar y verificar.</p>
+      rotación de la presidencia y de la integración, y el límite de cinco permanentes); el tope de
+      integrantes por comisión y el límite de permanentes sólo advierten, no bloquean. Con «Volcar
+      intereses → integración» se traslada a la integración real (reemplazándola) para depurar y
+      verificar.</p>
     </div>
 
     <div class="regla">
@@ -565,7 +585,7 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
       <p>La Comisión de Quejas y Denuncias tiene, además de sus tres titulares, una lista ordenada de
       suplentes (orden de prelación), que se renueva cada tres años al renovarse las consejerías o la
       integración. En su columna, cada consejería no titular tiene un selector para elegir su posición
-      (1º, 2º, 3º…). Ser suplente <b>no</b> cuenta como integrar la comisión ni para el límite de cuatro
+      (1º, 2º, 3º…). Ser suplente <b>no</b> cuenta como integrar la comisión ni para el límite de cinco
       comisiones permanentes.</p>
     </div>
 
@@ -584,9 +604,9 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
     <div class="regla">
       <h3>Verificación individual <span class="aplica">la matriz lo verifica</span></h3>
       <p>Por cada comisión modificable, su botón revisa: integración completa, ausencia de
-      duplicidades, paridad, rotación de la presidencia, renovación mínima y —sólo en las
-      permanentes— el límite de cuatro comisiones. Si la integración cambia después de verificar,
-      la verificación caduca y debe repetirse.</p>
+      duplicidades, paridad, rotación de la presidencia y rotación de la integración. El límite de
+      permanentes por consejería <b>no</b> se revisa aquí: sólo advierte y no impide verificar. Si la
+      integración cambia después de verificar, la verificación caduca y debe repetirse.</p>
     </div>
 
     <div class="regla">
@@ -613,9 +633,9 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
 
   <div class="reglas-pie">
     Por cada comisión modificable la matriz verifica: integración completa, ausencia de duplicidades,
-    paridad de género, rotación de la presidencia, renovación mínima y —sólo en las permanentes— el
-    límite de cuatro comisiones por consejería. La fusión durante el proceso electoral se revisa fuera
-    del sistema.
+    paridad de género, rotación de la presidencia y rotación de la integración. El límite de cinco
+    comisiones permanentes por consejería se advierte pero no bloquea. La fusión durante el proceso
+    electoral se revisa fuera del sistema.
   </div>
 </dialog>
 
@@ -721,13 +741,13 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
                   y gran total del reporte. Se usa para las comisiones en
                   decisión (continúan o se extinguen), cuyas designaciones no
                   deben inflar el conteo mientras se resuelve.
-     noCuentaLimite: true → esta comisión NO cuenta para el límite de 4
-                  (Verificación de Integridad). Así, quien la integre puede
-                  llegar a 5 permanentes, como excepción.
-   El límite de 4 comisiones por consejería (Punto 5) sólo cuenta las
-   permanentes que sí cuentan (todas salvo Verificación de Integridad).
+   El límite por consejería (MAX_POR_CONSEJERIA) cuenta TODAS las comisiones
+   permanentes, sin excepciones: Verificación de Integridad estaba exenta
+   (noCuentaLimite) y dejó de estarlo el 25/08/2026. El límite advierte, no
+   impide: hasta 4 sin marca (Art. 42.2 LGIPE), 5 en ámbar —admisible pero
+   requiere justificación legal— y 6 o más en rojo.
    ===================================================================== */
-const MAX_POR_CONSEJERIA = 4;
+const MAX_POR_CONSEJERIA = 5;
 
 const GRUPOS = {
   permanente: 'Comisiones permanentes',
@@ -764,7 +784,7 @@ const COMISIONES = [
   { id:'servicio',      nombre:'Servicio Profesional Electoral Nacional',   min:3, max:5, grupo:'permanente',
                         refrendoPresidencia:true },
   { id:'verificacion',  nombre:'Verificación de Integridad en Candidaturas',min:3, max:3, grupo:'permanente',
-                        comparacion:'no-comparable', bloqueada:true, noCuentaLimite:true, nota:'INTEGRADA 30/07/2026 · ya no elegible' },
+                        comparacion:'no-comparable', bloqueada:true, nota:'INTEGRADA 30/07/2026 · ya no elegible' },
   /* --- Temporales (presididas siempre por una consejería; 3 a 5) --- */
   { id:'capyorg',       nombre:'Capacitación y Organización Electoral',     min:3, max:5, grupo:'temporal',
                         comparacion:'no-comparable' },
@@ -789,7 +809,7 @@ const VERSION       = '1.7';
 const VERSION_FECHA = '29/07/2026';
 
 const HUELLAS_ORIGINALES = {
-  tope:        '310CA263B39B76CD',
+  tope:        '300CA0D02DAFAC62',   // 25/08/2026: el límite pasó de 4 a 5 (antes 310CA263B39B76CD)
   consejerias: '748C6D2AB1698C74',
   comisiones:  '622B51DBF962ADA5',
   vigente:     '1512ECDD113B5BC3',
@@ -1071,7 +1091,7 @@ async function cargarHistorial(){
 
 /* Orden de prelación de suplencias por comisión (Art. 44.2.c del Reglamento de
    Quejas y Denuncias). Lista ordenada de consejerías suplentes; ser suplente
-   NO cuenta como integrar la comisión ni para el límite de cuatro permanentes.
+   NO cuenta como integrar la comisión ni para el límite de permanentes.
    Se siembra con el orden del Acuerdo INE/CG241/2026 y puede reordenarse. */
 const PRELACION_VIGENTE = {
   quejas: ['delacruz','espadas','faz','humphrey','montano','cruzg','chavez']
@@ -1273,15 +1293,15 @@ const porComision   = k => CONSEJERIAS.filter(c => estaPuesta(c.id, k.id)).lengt
 
 const esPermanente  = k => k.grupo === 'permanente';
 const esModificable = k => !k.bloqueada;                       // las bloqueadas no se editan ni se verifican
-const cuentaLimite  = k => esPermanente(k) && !k.noCuentaLimite;   // Verificación NO cuenta (excepción): quien la integre puede llegar a 5
-/* El límite de 4 por consejería sólo cuenta las permanentes que sí cuentan
-   (todas salvo Verificación de Integridad). Quien integre Verificación puede
-   llegar a 5, como excepción. */
+/* Ya no hay excepciones al límite: TODA permanente cuenta, incluida
+   Verificación de Integridad (antes exenta con noCuentaLimite). */
+const cuentaLimite  = k => esPermanente(k) && computa(k);
+/* Permanentes que integra una consejería. Antes había dos conteos —uno que
+   excluía Verificación para validar y otro que la incluía para mostrar—; al
+   quitarse la excepción son lo mismo, así que se dejó una sola función y
+   porConsejeriaPermanentesReal es un alias para no romper llamadas. */
 const porConsejeriaPermanentes = c => COMISIONES.filter(k => cuentaLimite(k) && estaPuesta(c.id, k.id)).length;
-/* Total REAL de permanentes que integra, incluyendo Verificación de Integridad.
-   Solo se usa para MOSTRAR el conteo (quien integre Verificación aparece con 5);
-   el límite de 4 se valida con porConsejeriaPermanentes (que excluye Verificación). */
-const porConsejeriaPermanentesReal = c => COMISIONES.filter(k => esPermanente(k) && computa(k) && estaPuesta(c.id, k.id)).length;
+const porConsejeriaPermanentesReal = porConsejeriaPermanentes;
 /* Temporales y otros órganos que integra (columna derecha de "Total
    comisiones"). No tienen tope por consejería: es sólo la suma. Las comisiones
    en decisión (noComputa) quedan fuera: se ven en la matriz, pero no suman. */
@@ -1417,7 +1437,7 @@ function renovacionOK(k){
    Cada comisión modificable debe verificarse con su botón; las dos temporales
    inmutables sólo se confirman. La verificación revisa: integración completa,
    ausencia de duplicidades, paridad, rotación, renovación y —sólo en
-   permanentes— el límite de cuatro comisiones. La firma guarda el estado con
+   permanentes— el límite de permanentes (que sólo advierte). La firma guarda el estado con
    el que se verificó; si cambia, la verificación caduca. -------------------- */
 function firmaComision(k){
   const miembros = CONSEJERIAS.filter(c => estaPuesta(c.id, k.id)).map(c => c.id).sort();
@@ -1442,8 +1462,22 @@ function problemasComision(k){
   if(presidenciaHeredadaInconsistente(k)) p.push('quien preside Capacitación no está integrado al Comité');
   if(!rotacionOK(k))                p.push('rotación de la presidencia');
   if(!renovacionOK(k))              p.push('renovación mínima');
-  if(esPermanente(k) && excedeLimitePermanentes(k)) p.push('límite de cuatro comisiones');
+  /* El límite de 4 permanentes por consejería NO entra aquí: advierte, pero no
+     impide verificar ni concluir. El exceso se ve en rojo en «Total comisiones»,
+     en la barra de estado y en los Hallazgos. Ver avisosComision(). */
   return p;
+}
+
+/* Advertencias que NO invalidan la comisión: se informan, pero no bloquean la
+   verificación ni la conclusión. Hoy sólo el exceso de permanentes. */
+function avisosComision(k){
+  const a = [];
+  if(esPermanente(k) && excedeLimitePermanentes(k)){
+    const quienes = CONSEJERIAS.filter(c => estaPuesta(c.id, k.id) &&
+      porConsejeriaPermanentes(c) > MAX_POR_CONSEJERIA).map(c => c.corto);
+    a.push('rebasa el límite de ' + MAX_POR_CONSEJERIA + ' permanentes: ' + quienes.join(', '));
+  }
+  return a;
 }
 
 const fechaCorta = iso => {
@@ -1591,12 +1625,10 @@ const esInteresado   = (idC, k) => interesPuesto(idC, k.id) || (k.autoPresi ? pr
 const porComisionInteres = k => CONSEJERIAS.filter(c => esInteresado(c.id, k)).length;
 const porConsejeriaPermanentesInteres = c =>
   COMISIONES.filter(k => cuentaLimite(k) && esInteresado(c.id, k)).length;
-/* Conteos que se muestran en "Total comisiones" durante la expresión de
-   intereses: permanentes incluye Verificación de Integridad (que no cuenta para
-   el límite, pero sí es una comisión permanente). Las comisiones en decisión
-   (noComputa) quedan fuera de ambos, igual que en la integración real. */
-const porConsejeriaPermanentesInteresReal = c =>
-  COMISIONES.filter(k => esPermanente(k) && computa(k) && esInteresado(c.id, k)).length;
+/* Sin la excepción de Verificación, validar y mostrar cuentan lo mismo: alias,
+   igual que en la integración real. Las comisiones en decisión (noComputa)
+   quedan fuera, porque cuentaLimite ya las excluye. */
+const porConsejeriaPermanentesInteresReal = porConsejeriaPermanentesInteres;
 const porConsejeriaTemporalesInteres = c =>
   COMISIONES.filter(k => !esPermanente(k) && computa(k) && esInteresado(c.id, k)).length;
 
@@ -1697,19 +1729,22 @@ function pintarIntereses(){
                ? k.nombre + ' — integración fija (no cambia)'
                : (marcado ? 'Quitar el interés de ' : 'Marcar interés de ') + c.nombre + ' en ' + k.nombre;
     });
-    const permInt   = porConsejeriaPermanentesInteres(c);          // sólo las que topan
-    const permReal  = porConsejeriaPermanentesInteresReal(c);      // todas las permanentes marcadas
+    const permInt   = porConsejeriaPermanentesInteres(c);
     const temporales = porConsejeriaTemporalesInteres(c);
     const fila      = document.querySelector('tr[data-consejeria="' + c.id + '"]');
     const celdaPerm = fila.querySelector('td.total-perm');
     const celdaTemp = fila.querySelector('td.total-temp');
-    celdaPerm.textContent = permReal;
+    celdaPerm.textContent = permInt;
     celdaTemp.textContent = temporales;
-    celdaPerm.classList.remove('lleno');
-    /* La columna ya no anuncia el máximo, pero sigue marcando en rojo a quien
-       rebase el límite de permanentes: es el aviso que ya daba la matriz. */
+    /* Mismos tres niveles que en la integración real. */
+    celdaPerm.classList.toggle('lleno', permInt === MAX_POR_CONSEJERIA);
     celdaPerm.classList.toggle('excedido', permInt > MAX_POR_CONSEJERIA);
-    celdaPerm.title = c.nombre + ' — ' + permReal + ' comisiones permanentes de interés';
+    celdaPerm.title = c.nombre + ' — ' + permInt + ' comisiones permanentes de interés' +
+      (permInt > MAX_POR_CONSEJERIA
+        ? ' · rebasa el límite de ' + MAX_POR_CONSEJERIA
+        : permInt === MAX_POR_CONSEJERIA
+          ? ' · en el límite de ' + MAX_POR_CONSEJERIA + '; más de cuatro requiere justificación legal'
+          : '');
     celdaTemp.title = c.nombre + ' — ' + temporales + ' entre temporales y otros órganos · ' +
                       total + ' en total';
   });
@@ -1741,7 +1776,8 @@ function pintarIntereses(){
     const mias = COMISIONES.filter(k => interesPuesto(miConsejero, k.id)).length;
     marcador.textContent = 'Captura de tus intereses';
     document.getElementById('detalle').textContent =
-      'Marca las comisiones que te interesan (máximo ' + MAX_POR_CONSEJERIA + ' permanentes). ' +
+      'Marca las comisiones que te interesan (el límite es de ' + MAX_POR_CONSEJERIA +
+      ' permanentes; si lo rebasas se avisa, pero puedes marcarlas). ' +
       'Sólo ves y editas tu fila. Has marcado ' + mias + '.';
     return;
   }
@@ -1759,15 +1795,18 @@ function pintar(){
   if(modo === 'intereses') return pintarIntereses();
   CONSEJERIAS.forEach(c => {
     const total    = porConsejeria(c);
-    const permTotal = porConsejeriaPermanentes(c);       // cuentan para el límite (excluye Verificación)
-    const permReal  = porConsejeriaPermanentesReal(c);   // total real mostrado (incluye Verificación)
+    const permTotal = porConsejeriaPermanentes(c);       // todas las permanentes, sin excepciones
 
     COMISIONES.forEach(k => {
       const td   = document.querySelector('td.celda[data-c="' + c.id + '"][data-k="' + k.id + '"]');
       const puesta = estaPuesta(c.id, k.id);
       const llenaComision   = porComision(k) >= k.max;
-      const llenaConsejeria = cuentaLimite(k) && permTotal >= MAX_POR_CONSEJERIA;    // Verificación no topa (excepción)
-      const bloqueada = k.bloqueada || (!puesta && (llenaComision || llenaConsejeria));
+      /* Rebasar el límite de permanentes ya NO inhabilita la casilla: se puede
+         elegir de más y el exceso se marca en rojo en «Total comisiones». Lo
+         que sí sigue cerrando la casilla es el tope de integrantes de la
+         propia comisión (no caben más de k.max). */
+      const rebasaConsejeria = cuentaLimite(k) && permTotal >= MAX_POR_CONSEJERIA;
+      const bloqueada = k.bloqueada || (!puesta && llenaComision);
 
       td.querySelector('.marca').classList.toggle('puesta', puesta);
       const reg   = marcaDe(c.id, k.id);
@@ -1811,10 +1850,11 @@ function pintar(){
       td.classList.toggle('bloqueada', bloqueada);
       td.classList.toggle('candado', !!k.bloqueada);
       td.setAttribute('aria-checked', puesta ? 'true' : 'false');
-      td.title = k.bloqueada    ? k.nombre + ' tiene integración bloqueada'
-               : puesta         ? 'Quitar de ' + k.nombre
-               : llenaConsejeria ? c.nombre + ' ya tiene ' + MAX_POR_CONSEJERIA + ' comisiones permanentes'
+      td.title = k.bloqueada     ? k.nombre + ' tiene integración bloqueada'
+               : puesta          ? 'Quitar de ' + k.nombre
                : llenaComision   ? k.nombre + ' ya llegó a su máximo de ' + k.max
+               : rebasaConsejeria ? 'Integrar a ' + k.nombre + ' — atención: ' + c.nombre +
+                                    ' rebasaría el límite de ' + MAX_POR_CONSEJERIA + ' permanentes'
                : 'Integrar a ' + k.nombre;
 
       /* Selector de orden de prelación (solo comisiones con prelacion; oculto
@@ -1843,14 +1883,17 @@ function pintar(){
     const fila      = document.querySelector('tr[data-consejeria="' + c.id + '"]');
     const celdaPerm = fila.querySelector('td.total-perm');
     const celdaTemp = fila.querySelector('td.total-temp');
-    celdaPerm.textContent = permReal;                    // total real (5 si integra Verificación)
+    celdaPerm.textContent = permTotal;
     celdaTemp.textContent = temporales;
+    /* Ámbar justo en 5 (exige justificación legal), rojo a partir de 6. */
     celdaPerm.classList.toggle('lleno', permTotal === MAX_POR_CONSEJERIA);
-    celdaPerm.classList.toggle('excedido', permTotal > MAX_POR_CONSEJERIA);   // rojo solo si rebasa las 4 que cuentan
-    const extra = permReal - permTotal;                  // 1 si integra Verificación (no cuenta para el límite)
-    celdaPerm.title = 'Comisiones permanentes: ' + permReal +
-                      (extra ? ' (incluye Verificación de Integridad, que no cuenta para el límite de ' +
-                               MAX_POR_CONSEJERIA + ')' : '');
+    celdaPerm.classList.toggle('excedido', permTotal > MAX_POR_CONSEJERIA);
+    celdaPerm.title = 'Comisiones permanentes: ' + permTotal +
+      (permTotal > MAX_POR_CONSEJERIA
+        ? ' · rebasa el límite de ' + MAX_POR_CONSEJERIA
+        : permTotal === MAX_POR_CONSEJERIA
+          ? ' · está en el límite de ' + MAX_POR_CONSEJERIA + '; sostener más de cuatro requiere justificación legal (Art. 42.2 LGIPE prevé cuatro)'
+          : '');
     celdaTemp.title = 'Temporales y otros órganos: ' + temporales +
                       ' · participaciones totales: ' + total;
   });
@@ -1887,9 +1930,16 @@ function pintar(){
     const verif = estaVerificada(k);
     const etiqueta = esModificable(k) ? (verif ? '✓ verificada' : 'Verificar')
                                       : (verif ? '✓ confirmada' : 'Confirmar');
+    /* Advertencia que no invalida: se muestra aunque la comisión esté en regla,
+       para que el exceso de permanentes no pase inadvertido. */
+    const avisos = avisosComision(k);
     document.querySelector('td[data-pie="' + k.id + '"]').innerHTML =
       '<span class="conteo">' + n + '</span>' +
       '<span class="sello ' + clase + '" title="' + explicaSello(texto) + '">' + texto + '</span>' +
+      (avisos.length
+        ? '<span class="sello aviso" title="' + avisos.join(' · ') +
+          '. No impide verificar ni concluir.">rebasa el tope</span>'
+        : '') +
       '<button class="btnverif' + (verif ? ' hecho' : '') + '" onclick="verificar(\'' + k.id + '\')">' +
         etiqueta + '</button>';
   });
@@ -1926,11 +1976,16 @@ function alternar(idC, idK){
   if(k.bloqueada)
     return mostrarAviso(k.nombre + ' tiene integración bloqueada y no puede editarse.');
 
+  let avisoTope = '';
   if(estaPuesta(idC, idK)){
     delete marcas[clave(idC, idK)];
   }else{
+    /* El límite de permanentes ADVIERTE, no impide: la asignación se hace y la
+       columna «Total comisiones» queda marcada en rojo. Se decidió así para no
+       trabar la discusión; el exceso queda a la vista, no oculto. */
     if(cuentaLimite(k) && porConsejeriaPermanentes(c) >= MAX_POR_CONSEJERIA)
-      return mostrarAviso(c.nombre + ' ya participa en ' + MAX_POR_CONSEJERIA + ' comisiones permanentes (Verificación de Integridad no cuenta).');
+      avisoTope = c.nombre + ' quedaría con ' + (porConsejeriaPermanentes(c) + 1) +
+                  ' comisiones permanentes y rebasa el límite de ' + MAX_POR_CONSEJERIA + '.';
     if(porComision(k) >= k.max)
       return mostrarAviso(k.nombre + ' admite ' + k.max + ' integrantes y ya los tiene.');
 
@@ -1960,12 +2015,13 @@ function alternar(idC, idK){
 
   guardar();
   pintar();
+  if(avisoTope) mostrarAviso(avisoTope);
 }
 
 /* Expresión de intereses (modo aparte): marca/desmarca interés como integrante.
-   Aplica el límite de 4 comisiones permanentes; lo
-   único que NO se aplica aquí es el tope de 3/5 integrantes por comisión (ese
-   sólo advierte). No toca 'marcas' ni la integración real. */
+   Ni el tope de 3/5 integrantes por comisión ni el límite de 4 permanentes por
+   consejería impiden marcar: ambos sólo advierten. No toca 'marcas' ni la
+   integración real. */
 function alternarInteres(idC, idK){
   const c = CONSEJERIAS.find(x => x.id === idC);
   const k = COMISIONES.find(x => x.id === idK);
@@ -1975,16 +2031,18 @@ function alternarInteres(idC, idK){
     return mostrarAviso('Sólo puede capturar en su propia fila.');
   const key = clave(idC, idK);
   const quitar = !!intereses[key];
+  let avisoTope = '';
   if(quitar){
     delete intereses[key];
   }else{
     if(cuentaLimite(k) && porConsejeriaPermanentesInteres(c) >= MAX_POR_CONSEJERIA)
-      return mostrarAviso(c.nombre + ' ya expresó interés en ' + MAX_POR_CONSEJERIA +
-        ' comisiones permanentes (Verificación de Integridad no cuenta).');
+      avisoTope = c.nombre + ' quedaría con interés en ' + (porConsejeriaPermanentesInteres(c) + 1) +
+        ' comisiones permanentes y rebasa el límite de ' + MAX_POR_CONSEJERIA + '.';
     intereses[key] = {};   // objeto: presencia = integrante
   }
   pintar();                                  // optimista
   enviarInteres(idC, idK, { quitar: quitar });
+  if(avisoTope) mostrarAviso(avisoTope);
 }
 
 /* Propuesta de presidencia en modo intereses: se propone/retira; pueden ser

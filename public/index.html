@@ -158,8 +158,7 @@ td.total{
 td.total.total-perm{border-left:2px solid var(--linea)}
 /* Tres niveles en el total de permanentes:
      hasta 4  → normal (lo que prevé el Art. 42.2 LGIPE)
-     5 justas → ámbar: es el límite que admite la matriz, pero exige
-                justificación legal para sostenerse
+     5 justas → ámbar: en el límite que admite la matriz
      6 o más  → rojo: rebasa                                            */
 td.total.lleno{color:var(--falta);background:var(--falta-bg)}
 td.total.excedido{color:var(--excede);background:var(--excede-bg)}
@@ -532,8 +531,7 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
       <p>La matriz señala tres niveles en la columna «Total comisiones»:</p>
       <ul>
         <li><b>Hasta 4</b> — sin marca: es lo previsto en la ley y el resultado deseable del consenso.</li>
-        <li><b>Exactamente 5</b> — en <b>ámbar</b>: la matriz lo admite, pero sostener más de cuatro
-        <b>requiere justificación legal</b>.</li>
+        <li><b>Exactamente 5</b> — en <b>ámbar</b>: la matriz lo admite.</li>
         <li><b>6 o más</b> — en <b>rojo</b>: rebasa el límite. Además se avisa al marcar y la comisión
         lleva el sello <b>«rebasa el tope»</b> al pie.</li>
       </ul>
@@ -744,8 +742,8 @@ body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
    El límite por consejería (MAX_POR_CONSEJERIA) cuenta TODAS las comisiones
    permanentes, sin excepciones: Verificación de Integridad estaba exenta
    (noCuentaLimite) y dejó de estarlo el 25/08/2026. El límite advierte, no
-   impide: hasta 4 sin marca (Art. 42.2 LGIPE), 5 en ámbar —admisible pero
-   requiere justificación legal— y 6 o más en rojo.
+   impide: hasta 4 sin marca (Art. 42.2 LGIPE), 5 en ámbar —el límite que
+   admite la matriz— y 6 o más en rojo.
    ===================================================================== */
 const MAX_POR_CONSEJERIA = 5;
 
@@ -1743,7 +1741,7 @@ function pintarIntereses(){
       (permInt > MAX_POR_CONSEJERIA
         ? ' · rebasa el límite de ' + MAX_POR_CONSEJERIA
         : permInt === MAX_POR_CONSEJERIA
-          ? ' · en el límite de ' + MAX_POR_CONSEJERIA + '; más de cuatro requiere justificación legal'
+          ? ' · en el límite de ' + MAX_POR_CONSEJERIA
           : '');
     celdaTemp.title = c.nombre + ' — ' + temporales + ' entre temporales y otros órganos · ' +
                       total + ' en total';
@@ -1885,14 +1883,14 @@ function pintar(){
     const celdaTemp = fila.querySelector('td.total-temp');
     celdaPerm.textContent = permTotal;
     celdaTemp.textContent = temporales;
-    /* Ámbar justo en 5 (exige justificación legal), rojo a partir de 6. */
+    /* Ámbar justo en el límite, rojo por encima. */
     celdaPerm.classList.toggle('lleno', permTotal === MAX_POR_CONSEJERIA);
     celdaPerm.classList.toggle('excedido', permTotal > MAX_POR_CONSEJERIA);
     celdaPerm.title = 'Comisiones permanentes: ' + permTotal +
       (permTotal > MAX_POR_CONSEJERIA
         ? ' · rebasa el límite de ' + MAX_POR_CONSEJERIA
         : permTotal === MAX_POR_CONSEJERIA
-          ? ' · está en el límite de ' + MAX_POR_CONSEJERIA + '; sostener más de cuatro requiere justificación legal (Art. 42.2 LGIPE prevé cuatro)'
+          ? ' · está en el límite de ' + MAX_POR_CONSEJERIA
           : '');
     celdaTemp.title = 'Temporales y otros órganos: ' + temporales +
                       ' · participaciones totales: ' + total;

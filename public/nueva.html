@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Integración de Comisiones · INE</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+:root{
+  --ine:#4a2c6d;        /* morado institucional (el mismo del reporte impreso) */
+  --ine-tinte:#efeaf5;
+  --acento:#d5007f;     /* presidencia */
+  --tinta:#17171a;
+  --tenue:#8b8f99;
+  --linea:#f0eef3;
+  --papel:#ffffff;
+  --fondo:#fbfbfc;
+  --ok:#1a7f4b;   --falta:#a2680a;   --excede:#b3261e;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:system-ui,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--tinta);font-size:14px}
+
+.encabezado{background:var(--ine);color:#fff;padding:16px 32px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.marca{display:flex;align-items:center;gap:16px;min-width:0}
+.logo{background:#fff;border-radius:6px;padding:7px 10px;line-height:0;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.logo img{height:34px;width:auto;display:block}
+.encabezado h1{font-size:16px;margin:0;font-weight:600}
+.encabezado p{margin:2px 0 0;font-size:12px;color:#cfc4dc}
+.acciones{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.acciones .marcador{font-size:13px;color:var(--ine-tinte)}
+/* Estado de la captura de las consejerías: siempre a la vista, para no tener
+   que abrir Disponibilidad para saber si está abierta. */
+.captura{font-size:12px;font-weight:600;padding:4px 11px;border-radius:20px;white-space:nowrap;display:none}
+.captura.si{background:#e9f5ee;color:#0f6b3c}
+.captura.no{background:#fdeae8;color:#a3211a}
+.btn{font:inherit;font-size:12.5px;padding:7px 14px;border-radius:6px;cursor:pointer;border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff}
+.btn:hover{background:rgba(255,255,255,.12)}
+.btn.primario{background:var(--acento);border-color:var(--acento)}
+
+.aviso{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:60;background:var(--tinta);color:#fff;
+  padding:10px 18px;border-radius:8px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.22);opacity:0;pointer-events:none;transition:.18s}
+.aviso.visible{opacity:1}
+
+/* ---- Portada de acceso ---- */
+.portada{position:fixed;inset:0;z-index:80;background:var(--fondo);display:flex;align-items:center;justify-content:center;padding:24px}
+.portada .caja{background:#fff;border-radius:12px;padding:32px 34px;width:380px;box-shadow:0 8px 34px rgba(74,44,109,.14)}
+.portada h2{margin:0 0 6px;font-size:18px}
+.portada p{margin:0 0 20px;font-size:13px;color:var(--tenue);line-height:1.5}
+.portada input,.portada select{width:100%;font:inherit;padding:10px 12px;border:1px solid #d9d5e0;border-radius:8px;margin-bottom:10px;background:#fff}
+.portada button{width:100%;font:inherit;font-size:14px;padding:11px;border:none;border-radius:8px;background:var(--ine);color:#fff;cursor:pointer}
+.portada button.secundario{background:#fff;color:var(--ine);border:1px solid #d9d5e0}
+.portada .hint{margin:0 0 10px;font-size:12px;color:var(--tenue);min-height:16px;line-height:1.4}
+.portada .error{color:var(--excede);font-size:12.5px;min-height:18px;margin:8px 0 0}
+.separador{display:flex;align-items:center;gap:10px;margin:18px 0 14px;color:#c3c6cd;font-size:12px}
+.separador::before,.separador::after{content:"";flex-grow:1;height:1px;background:#eceaf0}
+
+/* Aviso de la ventana de captura */
+.banda{padding:9px 32px;font-size:13px;display:flex;align-items:center;gap:10px}
+.banda.cerrada{background:#fdeae8;color:var(--excede)}
+.banda.abierta{background:#fdf1da;color:var(--falta)}
+body.solo-lectura .chip,body.solo-lectura .ficha{cursor:default}
+body.solo-lectura .chip .p,body.solo-lectura .chip .x{display:none}
+
+/* Diálogos de administración */
+dialog{border:none;border-radius:12px;padding:0;max-width:520px;width:92vw;box-shadow:0 12px 44px rgba(23,23,26,.24)}
+dialog::backdrop{background:rgba(23,23,26,.4)}
+.dlg-cab{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 22px;border-bottom:1px solid var(--linea)}
+.dlg-cab h3{margin:0;font-size:16px}
+.dlg-cab button{font:inherit;font-size:12.5px;padding:6px 13px;border-radius:6px;border:1px solid #d9d5e0;background:#fff;cursor:pointer}
+.dlg-cuerpo{padding:18px 22px;max-height:60vh;overflow:auto}
+.dlg-pie{padding:14px 22px;border-top:1px solid var(--linea);display:flex;justify-content:flex-end;gap:8px}
+.dlg-pie button{font:inherit;font-size:13px;padding:8px 16px;border-radius:6px;border:1px solid #d9d5e0;background:#fff;cursor:pointer}
+.dlg-pie button.primario{background:var(--ine);border-color:var(--ine);color:#fff}
+.fila-clave{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--linea)}
+.fila-clave .nom{flex-grow:1;font-size:13px}
+.fila-clave .edo{font-size:11.5px;padding:2px 9px;border-radius:20px}
+.fila-clave .edo.si{background:#e9f5ee;color:var(--ok)}
+.fila-clave .edo.no{background:#f0eef3;color:var(--tenue)}
+.fila-clave button{font:inherit;font-size:11.5px;padding:5px 11px;border-radius:6px;border:1px solid #d9d5e0;background:#fff;cursor:pointer}
+.cfg-campo{display:block;margin-bottom:14px;font-size:13px}
+.cfg-campo span{display:block;margin-bottom:6px;color:var(--tenue)}
+.cfg-campo input[type=datetime-local]{width:100%;font:inherit;padding:9px 11px;border:1px solid #d9d5e0;border-radius:8px}
+.cfg-nota{font-size:12px;color:var(--tenue);line-height:1.5;margin:0 0 4px}
+/* Contenido del diálogo de Reglas generales (traído de la versión anterior) */
+#reglas{max-width:760px}
+.regla{padding:11px 0;border-bottom:1px solid var(--linea)}
+.regla:last-child{border-bottom:none}
+.regla h3{margin:0 0 4px;font-size:13.5px;font-weight:600}
+.regla p{margin:0 0 6px;font-size:13px;line-height:1.55;color:#42464f}
+.regla ul{margin:4px 0 0;padding-left:18px}
+.regla li{font-size:13px;line-height:1.55;color:#42464f;margin-bottom:4px}
+.regla .art{display:inline-block;margin-left:8px;font-size:11px;font-weight:400;color:var(--tenue)}
+.regla .aplica{display:inline-block;margin-left:8px;font-size:10.5px;font-weight:600;
+  padding:2px 8px;border-radius:20px;background:var(--ine-tinte);color:var(--ine)}
+
+.lienzo{display:flex;gap:20px;padding:20px 32px 28px;align-items:flex-start}
+
+/* ---- Banco de consejerías ---- */
+.banco{width:246px;flex-shrink:0;background:#f6f5f8;border-radius:12px;padding:15px 13px;position:sticky;top:20px}
+.banco.soltar{background:#fdeef7}
+.banco h3{margin:0 0 3px;padding:0 4px;font-size:12px;font-weight:400;color:var(--tenue)}
+.banco .ayuda{margin:0 0 13px;padding:0 4px;font-size:11px;color:#b4b7be;line-height:1.4}
+.ficha{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;background:#fff;
+  box-shadow:0 1px 2px rgba(23,23,26,.06);margin-bottom:5px;cursor:grab}
+.ficha:active{cursor:grabbing}
+.ficha.arrastrando{opacity:.45}
+.avatar{width:25px;height:25px;border-radius:50%;flex-shrink:0;background:var(--ine-tinte);color:var(--ine);
+  display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700}
+.avatar.preside{background:var(--acento);color:#fff}
+.ficha .nom{flex-grow:1;min-width:0;font-size:12px;line-height:1.25}
+.ficha .n{font-size:12px;font-weight:600;color:var(--tenue)}
+.ficha .n.lleno{color:var(--falta)} .ficha .n.excede{color:var(--excede)}
+.ficha .ir{font-size:13px;color:#c9c5d1}
+
+/* ---- Contenedores de comisiones ---- */
+.rejilla{flex-grow:1;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+/* Encabezado de grupo: banda a todo lo ancho de la rejilla, con el color del
+   grupo. Antes era una línea gris de 11px que se perdía entre las tarjetas. */
+.grupo{
+  grid-column:1/-1;display:flex;align-items:center;gap:12px;
+  margin:18px 0 2px;padding:9px 14px;border-radius:8px;
+  font-size:12.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+  color:#fff;
+}
+.grupo:first-child{margin-top:2px}
+.grupo .cuantas{
+  margin-left:auto;font-weight:600;letter-spacing:.3px;text-transform:none;
+  font-size:11.5px;opacity:.85;
+}
+/* Los tres grupos salen de la misma familia: del morado institucional al
+   ciruela que enlaza con el magenta del acento, y el gris violáceo para lo
+   accesorio. El verde azulado de la aplicación anterior quedaba fuera de tono. */
+.grupo.g-permanente{background:var(--ine)}   /* #4a2c6d — morado institucional */
+.grupo.g-temporal  {background:#83356a}      /* ciruela, entre el morado y el magenta */
+.grupo.g-otro      {background:#5a4a6a}      /* gris violáceo, el más apagado */
+.caja-com{background:var(--papel);border:1.5px solid var(--linea);border-radius:12px;padding:12px 13px 10px;
+  min-height:150px;display:flex;flex-direction:column;transition:background .12s,border-color .12s}
+.caja-com.sobre{background:#f6f1fb;border-color:var(--ine)}
+.caja-com.bloqueada{
+  background:repeating-linear-gradient(45deg,#f7f6f9,#f7f6f9 7px,#f1eff4 7px,#f1eff4 14px);
+  border-color:#e4e2e9;border-style:dashed;
+}
+.caja-com.bloqueada .tit b{color:#6b6f7a}
+.caja-com.bloqueada .cupo{color:#b4b7be}
+.candado{font-size:11px;filter:grayscale(1);opacity:.65}
+.chip.fija{background:rgba(255,255,255,.72);cursor:default;border:1px solid #e9e7ee}
+.chip.fija .nom{color:#6b6f7a}
+.chip.fija .avatar{opacity:.7}
+.p.preside-fija{background:#e9dced;color:#8a6f9b;cursor:default}
+.caja-com .tit{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.caja-com .tit b{font-size:12.5px;font-weight:600;line-height:1.3}
+.hereda{display:block;font-style:normal;font-weight:400;font-size:10px;color:var(--acento);margin-top:3px}
+.caja-com .cupo{font-size:11.5px;color:#b4b7be;flex-shrink:0}
+/* Las incidencias son lo que hay que leer de un vistazo: antes iban en 11 px
+   sin peso y se perdían bajo el título. */
+.caja-com .edo{font-size:12.5px;font-weight:600;margin:5px 0 11px;line-height:1.35}
+.caja-com .edo.ok{color:var(--ok)} .caja-com .edo.mal{color:var(--falta)} .caja-com .edo.gris{color:var(--tenue)}
+.gente{display:flex;flex-direction:column;gap:4px;flex-grow:1}
+.chip{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:7px;background:#f8f7fa;cursor:grab}
+.chip:active{cursor:grabbing}
+.chip.preside{background:#fdeef7}
+/* La zona del nombre es el asidero para arrastrar, no un enlace: si además
+   navegara, un arrastre que no alcanza a iniciarse te sacaría de la pantalla.
+   La ficha de cada consejería se abre desde el banco. */
+.chip .zona{display:flex;align-items:center;gap:7px;flex-grow:1;min-width:0}
+.chip .nom{flex-grow:1;min-width:0;font-size:11.5px;line-height:1.25}
+.desde{display:block;font-style:normal;font-size:9.5px;color:#b4b7be;margin-top:1px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.desde.alerta{color:var(--falta);font-weight:600}
+.desde.excede{color:var(--excede);font-weight:600}
+.chip.preside .nom{color:var(--acento);font-weight:600}
+.chip .p{flex-shrink:0;font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px;background:#f0eef3;color:#c3c6cd;cursor:pointer}
+.chip.preside .p{background:var(--acento);color:#fff}
+.chip .x{flex-shrink:0;width:15px;text-align:center;color:#c3c6cd;font-size:13px;cursor:pointer;line-height:1}
+.vacia{flex-grow:1;display:flex;align-items:center;justify-content:center;font-size:11px;color:#c3c6cd;
+  border:1px dashed #e4e2e9;border-radius:8px;min-height:50px}
+
+/* ---- Vista de detalle ---- */
+.volver{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ine);cursor:pointer;margin:0 0 14px}
+.detalle{flex-grow:1;min-width:0;background:#fff;border-radius:12px;padding:20px 26px;box-shadow:0 1px 2px rgba(74,44,109,.06)}
+.detalle .cab{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding-bottom:16px;border-bottom:1px solid var(--linea)}
+.detalle .cab h2{margin:0;font-size:18px}
+.detalle .cab .sub{font-size:12.5px;color:var(--tenue);margin-top:3px}
+.detalle .n{font-size:26px;font-weight:600}
+/* Tres cifras por grupo. El color de alerta va SÓLO en las permanentes,
+   porque el límite de cinco es exclusivo de ellas. */
+.cifras{display:flex;gap:26px;flex-shrink:0}
+.cifra{text-align:right}
+.cifra b{display:block;font-size:24px;font-weight:600;line-height:1.1;color:var(--tinta)}
+.cifra span{display:block;font-size:11.5px;color:var(--tenue);margin-top:2px}
+.detalle .n.lleno{color:var(--falta)} .detalle .n.excede{color:var(--excede)}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 30px;padding-top:14px}
+.cols h4{margin:0 0 8px;font-size:11.5px;font-weight:400;color:var(--tenue)}
+.linea{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:8px;cursor:pointer}
+.linea.dentro{background:#f6f1fb}
+.linea.llena{cursor:not-allowed}
+.linea.llena .nom{color:#b4b7be}
+/* Al tope: se puede seguir marcando, sólo se advierte con el cupo en ámbar. */
+.linea.al-tope .cupo{color:var(--falta);font-weight:600}
+.casilla{width:16px;height:16px;border-radius:5px;flex-shrink:0;border:1.5px solid #c9c5d1;background:#fff;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;line-height:1}
+.linea.dentro .casilla{background:var(--ine);border-color:var(--ine)}
+.linea .nom{flex-grow:1;min-width:0;font-size:12.5px;line-height:1.25}
+.linea .cupo{flex-shrink:0;font-size:11.5px;color:#c3c6cd;width:40px;text-align:right}
+.nosuma{flex-shrink:0;font-size:9.5px;font-weight:600;letter-spacing:.2px;padding:2px 7px;
+  border-radius:20px;background:#f0eef3;color:#8b8f99}
+.linea .cupo.mal{color:var(--falta)}
+.rail{width:246px;flex-shrink:0;position:sticky;top:20px}
+.rail .ficha{cursor:pointer}
+.rail .ficha.activa{background:var(--ine-tinte)}
+.medidor{display:flex;gap:3px;margin-top:5px}
+.medidor i{height:4px;width:14px;border-radius:2px;background:#eceaf0;display:block}
+.medidor i.on{background:var(--ine)} .medidor i.lim{background:var(--falta)} .medidor i.ex{background:var(--excede)}
+</style>
+</head>
+<body>
+
+<div class="portada" id="portada">
+  <div class="caja">
+    <h2>Integración de Comisiones</h2>
+    <p id="portadaAyuda">Elige tu nombre para entrar. La primera vez estableces tu contraseña.</p>
+
+    <select id="selConsejero" onchange="revisarConsejero()"></select>
+    <input type="password" id="claveCons"  placeholder="Contraseña" autocomplete="current-password">
+    <input type="password" id="claveCons2" placeholder="Repite la contraseña" autocomplete="new-password" style="display:none">
+    <p class="hint" id="hintCons"></p>
+    <button id="btnCons" onclick="accederConsejero()">Entrar</button>
+
+    <div class="separador"><span>o</span></div>
+
+    <input type="password" id="claveAdmin" placeholder="Clave de administración" autocomplete="current-password">
+    <button class="secundario" onclick="entrarAdmin()">Entrar como administración</button>
+
+    <p class="error" id="errorAcceso"></p>
+  </div>
+</div>
+
+<div class="encabezado">
+  <div class="marca">
+    <div class="logo"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAABSCAYAAAAPbKsIAAAbAUlEQVR42u19eZhdRZn++9Y5deqc293pdCdIEnBhEQQEISAKwxb8wTzij0Udgs6iAgIuOIMjjCgTOg0y4LgAozgSGAdZfJxkiMiiPCoGECOyGTCQIGvCTpJe6OWetb75456bvml7Te943jznubl976lT9X31rfVVXaBAgQIFChQoUKBAgQIFChQoUKBAgQIFChQoUKBAgQIFChQoUKBAgQIFCkw3sCBBgQI1ELSoggoFCmwjFMudbd8XlqPAX7iVEAgBYG1zy8Eb51x2/2NzWk4CgOU42SkoVOAvzmdfhRZ3EVrTFkB9rOmiFkV+pZ5Gd0j5WXHse/bZhF5gqRCUgo0FxhvudBaKR+b+6zvrrL+sRH1Up5SxRbrjJtbt2pH1fIO46LOrKv1PCzYWeFNbDIFwBRarxViRrWlu+Ugd9NWaztwuiVIADiv9zUr0nK4sOvE9Ha23CpY7xOKsYGWBN6VgCFoU0SoAZG3z0paA3tJEUiTIMoJOTeBtNRwCslkhW7hHW+uL+b12Erqp8mukGMiaOaOke1YZ9oTwfjRxms2vsbQx2dhu2k0LV2o5TnaI1uxn+ILZpXnutQ30/75DytZCqGqEIueESpBm9fR36BH7I8HyRbnAkBMzgYabHNvDrO0RSDvuumjsbuh4tFFYjMGEYjFWZL9pPL9pjirdPEv5i9qlNwXgcmiOpLMZuB2296p921vPFrS4ROtEMUkBsG4QHExr9wFpIaKGmCyEZZgk4UoAUQ2txTHmKAXsMoI2AABJpO8Aujdh/OIp5u03aWNO2qbPA3670k+KrI7j+MmcFgJAUF8/VyfJ8UPeP4VIougWAO01Y54ZglEVivvmnLdgrjTcUaK3f6f0poRyR9j5tIGB2y4957yn7aIrH8KZ+iAsSyYoSZFqz7sadM8cEY3FJonx5qOra0tOZwUgc425g3COGymfRORZKHwyDcP7crfFjtG1UgCs1voAKPeRkU4TkfSf0jj+j5wWFoB1ff8QCldPW7Vv04VJkvxheyzulLlS1aB5TeMFu/hi7jTUe3RKOGKhyP0ap1vCrI7mijXNS17cv+3imydQOACyG5C0cg1Ku6r23AwOmEruHEEbW9sisSsEv3a94Lw0Ll9ZE6eMNeFQ7QOG0fgV602WB6BHApF0ulqMsVjYKSmzqMQUi7OHmr78tsAxdxm6e3RLlHKUgkqAKaxKJLN1MDc9OmfJBw7CsuQhnKkn0KVyR3FhkOB7pPfrXNO5JK5wjbkJQGMuFGNVahzNWGTgucJR0sPNxz9ZF2eMYAha1GKsyB57y1d2rEfdzz26u3RLPGqh6BsAmcIig5hAvJ+saWo57CAsSwQt03KNZvt5JCmh/tY1/m+1Lh2Ya8MxMX8K49rJujAjBKMFLQpYKmt3aKl3k+C2QHl7j0UoajNVMRIrREMA92ePzm45gmhNJ9ByTMVkcivCgX2g7L3amE/XpCNnSoFlmicj4km6tjsWmzStWql5WsylWIpTMvU/9cq8t1N6RhVTDC3hSkWSWI+6IaB755rZS07Zv+Pi2yqWozWbhFTuZKAa+JYAXuN6/vvSOPwnAL2Y3lUAGQBHiK84IitFxCU54X2NkuTFvnB0mgrG3VjqLMKK9LGmJd+bxbrjOqQnIdS4anQFpRJk1oUKSsrc8semlrPY3nqtoEW1AGydnEXAyXCtBIAl8WltzP6w9lNJkjye83OiFgTHw+y9FEXRszPIf51YVGufHp1z4eebVP1nO6Q3BagniPgqhbUJUtYr/5onmlq/RrTaVrTa5f3K12e4a+VULAQPAp3VWvt/m1uM6exaeXnfqq8TfU1fwViO5c4itKZrmloOC8S7skvCTCDOBM8aZSHokShrUP4F65suvnn1rJbmxVicrXrzBOXYaiGIWVC4SRv/27WZrGnYX0Ff9cBkXNNTMFrQoh7H47J2VkuzobqRgJNBSHDCMyn5M5wOKaclpT8yx3VX/7Gp9a8WoTUVCN9EOwKdfMJlAL+oPXOXMWbX3Hq40yprVVnpL9K1SwG0otWKI1fX0X97GXHGSTbzBNwOKWcO1Z4e1d3rmlu/ShCcWfGGHX6YcABJQXV4Jvid43kn1gTj00IJUKnuPAaK8teJvqZfVqpaGLi26cKz6lXwN29IOVXjlIEavfTTKUtiCTiNDC5Z13TRB1LIhZvb7e+PwtJsGm92imv88QzDV7K6gGQk30LwFqXNJUkSXZgL1nislo8lJoJkcoTnBUk+pgnvSxyX7wLQie2olZqwiXoy9hYAFKq/IzjlNQMElAC2Q3rTtzrNR7+YtTfNbsTR6ETnJFXmjtZCKBG8pMAvWtjvkmrnEZaRVF0rgeIF2vPf6zo8vVwuv4i+dO/UJHmILwjkC5P1UK31AUmSrNkewZhoEyse1FmhxN0ajpoipuRRn2QeHRXQ0y9nHVeGKC86oLO1AyA4bdOb4sdx+aepo94PkV8BrE5sGV4PQAFIQRybZvZ3jjHH5K6VmkIdZSfJhaq9pleMQbTa5TjZ2bPtwnVlyc7w6SqCViZ5EubPS2cxcATyUhnpCXu3t5xzUPvXp6OlGGgiNaJcfimJw2MBe2nNxB4J0yuLfuTOCvyF6/lfQV9KdyrcWjXJ1/QMvhdjRbYKLe7+7a0/7rLhpY0MXE7i6qwAlgBm0XfLNrm1B9nB+25puW0VWtwZIBRVbNXySRR9lcKPAtiCresYIxIOC0BI/ptr/J+gsXG2UqptCuONolZqEVrTVWhx921v/Wq79KyYzZIGJJl4oZDM0FEeXNtj4395V/uSEw/c0vqy5OsqM6xEpOqCunFcXqkg74fIaox8pTvXnpISPMkNo99a4Bj0baIqMEnBN2tN2bm4nSdjb+9O/cypxya7LWhi8Fdt0mPdStwxASrWShNLTo+NXu5k+KlD2i/95cnY23sWgRCLq26EYOybfibZK6ysTURR9DSARdrzvwXi7PzzkWetgL0BLqtxxyY65sgAOCSWSJb9FJVFyAnPSiVJ8qd+imVKBIM1FmibwOdhPIxHAKx47Yn4IprDnm++7Bckju4YxW69EVoJIZjtyAYpwVv5tjlf/iSfZuSAWIEn4iGyOJhBQlJ1reIkDr+gff8BWPkuyFnoW9QbLmtlMQUHGQjwdJIkf/xLsBiDCEPDHM9Lj7aQt9dqJBdK9SBNFnZf8ocrSqccs1C9Fe3SK2ocVsIFAheK9fTdH8T3dyyJfvqQ7frSZ0teyY9hM3dbzQsF+0wcx6sAdMxAIalObJWE4Q1a6zVC5zoCC3MeDBd4TtWCn0HfZq90kug0JYIhNZahwfG8wxXUCWCykyUeIvAcRFR1i2cGC19cbrCbX780/OWHfxx86ry5rH9/LKkl6Wz/6K04UFYJejfYtosuiG5+0tDMceAwoW3fZoaIEKSI8ABt/NMheM5Sbs2i6D4A5RnkBldp71a0cHK46/nfIXlaLtMW06+YsH+t1JvSYhBBsJNOZZEo+f8UfABUc0AA1m6gYBaqCyvSp3wTZDAsqQez57Cw99IF71Y7qRgpyhKHBBVGbD3ywzhgrYZr6ug5m6XbrM9e/LBhABFkCTIZUO+L5As+siuV+pASnK0885oAv6bw1kSre9Db++oMcq0cAL1pHJ7uGvMAwSsA+CN0rSZRLLaplZoMTMm5UuJlWQOIDgpuyshrSAnzaVfniJjBOZnCh4sO6Y3vi9eXPRU0fsJ73xE9CLssLBwoDlscJMKENm1mfcMT2SvP3BevXw+B2+A01EUSjSiizMiIkB4QSgDfEQlAsV5q6+OZlbXKqq5VGkVXu27wCBy5nsC7MI22wNbUSk37kyPHpE3iOF4HYN1gnBoK5a3Rn4KDFP8+68QDYslaY2TWik2I4VwrSeuU8RPJ7p9Xt+gKvfHgVwSCrqxrTLNrBmOra5Wm5QeR4lDXmP8keEqNCzNVrlW1VupIzwtsvoNvMmqlfoUpqpUa0+piJf9okcKiefMXL3qo+YJ1dfCuNtRNXVLOCDocMKaQbDZL/qvZG7960D538qkbz+s4Eke69+Ce8dLyMymNO5hr1Z5G0cdcz3+AxNfRt+YxFZu1qrVSZwvk7EoNzsSTdyprpcat9kWw3Dmo7ZIVZZW8L5bsN82sc1Sl6jWrlIlv/ZfMYZ3Ta6OVT7TLh07t/GGHoEXdg3tSTINy5WnmWjlpHH7bQo4RwbOoWOGp3Bde1EqN3tZWdtct3Py1px5re2xRj0RLPThpHY0jkCyP4NPZDHSnDa//cbs9eTFa40k80HnGulZZFN2daudQQG6rKUScqirbGbFRaVptf6zsrssnetuK1jXNS+4MRH+zkcFhPRKhnr7bacPr9mlvOTX/paXJFoqRpBurFfZ2CK05XBu23+vYXauentcS4ATX8/+VxMX9LMtwWt4OUUJjMX1PIhyj7zeNUJ3oq9Di7t928e/3bLvwiB6bfMZAv9op4Q0VoWhRS7F08k/9qGTahtvM7+Sv9XlauD+CEbThbm1j/FwrBUClcfg1K/Y4EXm5pq9DXR4qe1n0IPNHjbCdqbq2P1swfX2BPjfpofqWuQd2o41otVLZNy6TKq+AeJ63N+DsBmRDaVoBoEhGURTdDSCpbUOXSguZyk4jbKOctzGeGRwXQBoEwU5ZxgOA1A4zDwRwHKXk0TAMN9Z8V9DU1Oj19Bw2XedPHMf3AujanuB7hjjL2xx7U/xi69hR/LDnTLYY2wqHcBrsthttejqboDamYiwDpbCJ6X086ExOuxco8OazGKrGJ5Zx7E81y8EBsjPb4y9ur4850PgG69f2jpfjSL/hnjNYn9UwWne8+TwWnoyGb2+KNL4zAkI620EgThMlUmD8eTItgzDled7uSqkFvu87SZJ099NMg/mfA/29mvcngAYAMZqaGj1rd3VdtyHLss4abRWg74yk/nt7+z+/qpEaUTmjaTS+MY0xuymldrL19SmiqAwAdXV1OwLYRWtdyrKso197HEKoVL++IQiCBUqpt/q+r5Ik6an5fLC2OIyWH/A5qK+fq0V21VrX1fR5Gz46jjPPcZzm/JrjOM4OnucFaZq+YYzZXSm1wDY0xIiisIbOagjNPxifR8sT9qPLYEJWffU8z3un4zg7ZFnWhUksgat2IHA9s0H7gXU9/5p+HVeDDG6ggSkAcIw5Vhv/954XfAQAXGM+r/1AXM+8ikoO3Xe94BzXmEdRX7/DSDrqBsFB2vPvdD3//OqfBlAG/fPd1fEZ1/h/0sa3rvEfQzNmAVDamMs9P7DaM/cOoVxqGTbQ514+xju8yhivq/k7R6m81LDP8fwLPD+w2pjVA0y2WdozL2vjZ9r4ov2g7/LMA5V++n/SlftPrdJmCCEYiM9bV6HdIHif9vxfuJ7/pVHwZCSun5Mrs1208cva+KnWet8RuIoDz51xsDi1Lk4pf98FQBtjdoqi6PkaLSF1dXU7pmlaF0V+O9DZXrmrNF+ldiXIOhGpLG4p9XtY+28A2wAkjucdR+JyAD3IMpM/x8/HEKKyXhDUvBdY+19Uaj+b2ftr+poC0L7vzwsdJ0JPz+uD+rwiHkgS2Nft9r+ZIjwTQl1Jjm0dc1Ydg2+tF7puD7q7N9e0mW19nlIpentfqWpKkteL4FEF+V3+/bjaViCiyuXySzWW0c3H2wUAxph3RFH0GvoKlTMAge/7cwEwDMM2AN39BNUZyqIJ8BjF3lWlgxDPAXAgUPmYq1eUj2l+qFRcs3elL16qr9/BT9NSGIbtAN7YKqgVnuwjVu4ekCeuG6K7e1NN36oeQjdKpXno7Q1R3XVZKs3zrTWh6/bW3KMGEbbtClLGmg4TVCThx64xT2rjX+l65mkLrteevyp3j2a7xr81TtN1FnxSm2iTNv5KAHU6tTeCCAApw+F12pjTXJE6kieAONwYs7ui+m9AMoCetrJO69J+nmeu1cZf7wXB5wFAe/5t2vjrPa90rPb8y0m1j4iUleL5rjE/AJBo3/+ka/w/ZoKNOs02uMb/mTFmNwx4fD6rY7Mkz3B9/xAqvA5AqvrWMeb/ucZfpzP7ciZ4XifpU25lXLMBiPb9T7jGX5sJNurMvuwa/5H88DNAcCgpx4vwQADQWh+oPXOvzuxLqZUXXeP/wfG84wGI5/tf1sZ/0vX8H2jPrLbgk67xH9W6tDCn/UXamBcywcZMsEF7Zn3VUqphAmcBMpACkTWJ1pcmSn0rUepbaRR9H7UnG+a/zaGNOc31/CcywQad2Ve0Z37rBu7BAARBsLNr/Ft0kj6XCZ7XnnlGe953ADiuMT8kuKeIlEkscX1/GYBEG3P6Vhol6UbX+LcbY3ap8tT1zJPa+LdqK69oz7tM69L+rvHX6sy+ktP8adfz7wTQmP8gzZiTBGoc3KqtZlmABQTnA/gcyDcAeFA8yvO8w7UxJynyeAjWWrEnCnCLCDpzDfd0LmSuAC9YkdezLJsP8N0QOYBkJMDGPibJejLtFWBnkgvE2iYAFObvxc4WYCNEorzNTRCu06XSgRBcR2BPEVwLyFqSH7TAj3J3bTBf+Y386LZlVmR3qXEXlPCjFJZEcA3FfhgisSI/rLV/rOfV7wXBDwnsISI3CeR/SR6gBNcD8AXyDoDvFnJnAAZUt0GpwyH4hUBWENhfUa1EXd1bRKQEcj6JU4VsBBCTfCeYfhpASYATRNgOyFkiOBfkTiQuBVCyFQ3PIZjoQoQkP6HT7HUteEmDL7med25uxVxWfru8y/Pq3wXwv0i8g8LFFnIJlDoUmXsTgJJrZZkiTxTBJgCXg/SpnLO11h+HcG21PQE3wWKdGwQHA+raCo1wjUDWk/yQBW6okBfzSS4AcDxE7helfiS0xxNsEMiNFHuiiLQrxb92jfl4GJpOjMMp7+O6OENBL0kLyH+kUbiviGwkkIlSzaKy9VLxHw5X4H9TZAfAPhaG4YtJY8OXINIBUCuLc7M4vhVKzZLcIoVh+IJAzs0tdWfJ94+J4/gpsPJbECSjfFKXAVgo8dM4/AYg60hqJfh+GoeXIbWfZEUz3pPG4Rmw9iyIZADf63neOwewGhlIWMiVgDxM4N0ET8m36ioASOLwHIh8lURZwPNAlgTIoGS2RXxM/rwH0jj6+zSKTqbN9kh09J4a98+SssX1/YVQaj6sbU/i8GNpFC0WwdMkXS+xR4qwvbKNQR5Ko3AfEfk5AStgE4AeBzgJsFeJ8BAQZ2y15vX1peEC0AqdCQHWQOzXIfYbsPJtKHUvan4jm7ShRXpCbl3aBHIkgb0hAiru7nnBhyCynwgygf1cEoX/nCjupSBvS5Lk5jQOLwHkCZIaIt9J4/CbzOTUConxyzQOzwR5ds6TQ4IgWECRLSStQG5MovCQNAzvTePwMkp2LoFNAn6JZJMAGYQ7Ap3jkgJ2x8GV+rPVRZJt+X9CASgi9WmY3u8Y51gF/DXIvQAcraiOcI1J0k2bvg/jO6iclhfnzKrd/E2IBGCFQQ0NDVFnZ+fWySkipTwm2EH67mLNaYPptoF1tc6q+hsr2xzqUPvUjIBVwAuwzhlQ9pGaDFoGwNHG/wnID4rIoySuEuBzCthPKpqxhG2fjwzYw0lNT4aoZ5AJ23/NBDX3C8DqFsUw/0qX7/tvzwQPkZwjIjdA5Hug+gYANz+IYrgztFIQlha/SeLo/H6fGRAptq2iFZAQQR2E7QCuAmyUEW2USsAPMgEAnaZzLTnf87xn4jh+qi8OYTJIGtz2o0X+P66txlquMTcI1Skish6U7xDiEDxE+rJcdqotRl4pKl5NtkKJSJBP1BIrxXA9rjGfIdX3BNxdiK9D5OF8wNUj4Q0gtLAXO8YcS8uu/Lc0TM6IMiAKYNNrmzb/TxAECwTcIoCC8POu5z9FcicIlFSyMQLQFRFa4jTXmM9A1HUiIIijXM//AWiXgXQAWR3H8TO12jHvvy+AEuG8JOn9A8R+N5cmBYGTB8PHQAAlWAnLbgL75YFsPUX/Uiq/uHyo65nrXWNWOsq5XYGrgFkmV0xKhE1pGD4Ca1+CUs3a85e7xqwgsZuIhLFx7yVldk7rUi2tCVgR2QvkHAA9QtxIqD1BVqp3KxW+bt4nM4grVV85zQWf08a0aWM256/3o+Jm5XxV9RTn9pxOTRTcBWA9KPtB6GdRdDfBNSAcCv9TG/9KKOd3UO7PrFIfByACBiJCUM7UxnxaHF4nleD+GNfzr4XIVSAdCO4pl8uvCNGEvipfqYybx+ba8nYl6jWAB9V8p5oUmrKza4XAsyLYQOLVXL43imADldqcE/w5EWygZdklf06xbQSOo+BuEHtba69P4/CaPG64GpAOgAdSuL9SarMINhJ4BoCTRdGDELkvz4gclyR4KzJ8TcRuBKFJPCmQmwFsJNmZs/waQDYT2JXgB5Ok92FQ/kGAJ0icCmIvEbktIf8Of76zTQg8Xxmf2gRAJXH8ZQh+DXADiFcA9FCwFCKbhVgiSs4XyM0i2CjAvCTpeRxiT688j/9A8EQRedBCjgHeaIOwrdK+tAOI4DonwsoqEIsIfhSChxXkJHR1bSHZI4INELxQUch4RQQbQOmNouZ7xcqdAESBdwjxNli7GuAGHUXzSNkkgg2sxGkDWf1nRWSDiLwMQVRzpRU68DkRbIADSZKex0XsZ0XwAhRuIPHvIlwAwX0AJFE4XURuIfEWAP8I4A2R7PI0DC/LqboMkC0E9gD4wbRcvh+wpwmwnsTpBPcQkVsSh59AZR/Ixso4uSXvbzfEtsLKawDPsZSLCblFBBtJKQGNSgTPiciGqvcxFXBzDer0e68G+RyYNas5CIKd8wWebVFXt2OpVJqHvv0Iun8gFQTBzpg1q7mmzfpSqTS/phW9jcA3NMwJgmBBrmG3LhSVSqV5eTsjGV9/BaK3dUMb5gzQh9o1CVVXV7djvjjYfyX/z9uvr587wHdVP1o6/fsRBMECNDY29euHzu/XQ7jObs3n/XfB9adDdUy6VCrN77emVKuhZ+d0b/izp9XXz80/q6WRW6HhNv3HoDRCY1PexkA0d2vGPe0x0AnUA61cjqYkQ43i88EWzEZjckfSBzWCBTpnFOUSznbQdqIrXoca05ALfOPEEzWRSaSJmuwcwedDlTyoIe4f6N6BvoMR3KNGKIwcgYBwGCEdbsxjee5QE4ojaLN/2n2go/RHy8eR8nkkPOEo5spIxlqgQIECBQoUKFCgQIECBQoUKFCgQIECBQoUKFCgQIECBQoUKFCgQIECBQoUKDA4/g+TWD3yr7SHywAAAABJRU5ErkJggg==" alt="Instituto Nacional Electoral"></div>
+    <div>
+      <h1>Integración de Comisiones</h1>
+      <p id="subtitulo">Arrastra una consejería a la comisión · toca su nombre para ver su ficha</p>
+    </div>
+  </div>
+  <div class="acciones">
+    <span class="captura" id="captura"></span>
+    <span class="marcador" id="marcador">—</span>
+    <button class="btn" id="btnModo"    onclick="alternarModo()" style="display:none">Expresar intereses</button>
+    <button class="btn" id="btnVolcar"  onclick="volcarIntereses()" style="display:none">Volcar → integración</button>
+    <button class="btn" id="btnLimpInt" onclick="limpiarIntereses()" style="display:none">Limpiar intereses</button>
+    <button class="btn" onclick="verReglas()">Reglas generales</button>
+    <button class="btn" id="btnHallazgos" onclick="verHallazgos()" style="display:none">Hallazgos</button>
+    <button class="btn" id="btnReporte" onclick="generarReporte()" style="display:none">Reporte</button>
+    <button class="btn" id="btnRestaurar" onclick="restaurarVigente()" style="display:none">Restaurar vigente</button>
+    <button class="btn" id="btnClaves"  onclick="verClaves()"  style="display:none">Contraseñas</button>
+    <button class="btn" id="btnVentana" onclick="abrirConfig()" style="display:none">Disponibilidad</button>
+    <button class="btn" onclick="salir()">Salir</button>
+  </div>
+</div>
+
+<div id="banda"></div>
+<div id="cuerpo"></div>
+<div class="aviso" id="aviso"></div>
+
+<dialog id="dlgClaves">
+  <div class="dlg-cab">
+    <h3>Contraseñas de consejerías</h3>
+    <button onclick="document.getElementById('dlgClaves').close()">Cerrar</button>
+  </div>
+  <div class="dlg-cuerpo" id="cuerpoClaves"></div>
+</dialog>
+
+<dialog id="reglas">
+  <div class="dlg-cab">
+    <div>
+      <h2>Reglas generales de integración</h2>
+      <p>Comisiones y órganos del Consejo General · LGIPE, Reglamento de Comisiones y Acuerdo INE/CG241/2026</p>
+    </div>
+    <button onclick="document.getElementById('reglas').close()">Cerrar</button>
+  </div>
+
+  <div class="dlg-cuerpo">
+
+    <div class="regla" style="background:var(--falta-bg);border-radius:8px;padding:10px 12px">
+      <h3>Importante</h3>
+      <p>El sistema compara cada integración modificable con el Acuerdo INE/CG241/2026.
+      En cada comisión debe pulsarse su <b>botón de verificación</b> (en el pie de la columna)
+      antes de continuar; sólo cuando todas están verificadas puede concluirse la integración.
+      En las dos comisiones temporales inmutables (Presupuesto 2027 y Seguimiento PEL 2025-2026)
+      únicamente se <b>confirma</b> la integración.</p>
+    </div>
+
+    <div class="regla">
+      <h3>Elección</h3>
+      <p>La elección y la rotación se llevan a cabo en la primera semana de septiembre.</p>
+    </div>
+
+    <div class="regla">
+      <h3>Rotación <span class="art">Art. 11 RC · INE/CG241/2026</span><span class="aplica">la matriz lo verifica</span></h3>
+      <p>Son <b>dos reglas independientes</b>, con periodo y referencia distintos. La matriz las
+      contrasta contra el <b>historial de integraciones 2020-2026</b>, que incluye a las consejerías
+      que ya concluyeron su periodo.</p>
+      <ul>
+        <li><b>Presidencia — cada año.</b> El periodo de la presidencia dura un año, así que debe
+        recaer en una persona distinta a la del acuerdo más reciente (INE/CG241/2026).</li>
+        <li><b>Integración — al menos cada tres años.</b> Respecto de la integración de hace tres
+        años (INE/CG532/2023) debe haber cambiado al menos una persona. Cuenta igual que
+        <b>entre</b> alguien que no estaba o que <b>salga</b> alguien que sí estaba —por ejemplo,
+        una consejería que concluyó su encargo—: en ambos casos la integración ya no es la misma.</li>
+        <li>No aplican en la Comisión de Verificación de Integridad en Candidaturas ni en la de
+        Capacitación y Organización Electoral (sin composición comparable en el acuerdo), ni en las
+        comisiones con integración bloqueada (excepción no aplicable).</li>
+      </ul>
+      <p><b>Excepción por refrendo de la presidencia.</b> En abril de 2026, al concluir su periodo
+      Zavala Pérez y Rivera Velázquez, cambió la presidencia de <b>Servicio Profesional Electoral
+      Nacional</b> y de <b>Fiscalización</b> — las únicas dos. Como esas presidencias no cumplen
+      todavía el año, en ellas <b>no se exige la rotación anual</b> y quien preside puede refrendar
+      si así lo desea, aun cuando al término del periodo acumule más de un año. La rotación de la
+      <b>integración sí se sigue verificando</b> en ambas, igual que en el resto.</p>
+    </div>
+
+    <div class="regla">
+      <h3>Límite de participación <span class="art">Art. 42.2 LGIPE</span><span class="aplica">la matriz lo advierte</span></h3>
+      <p>El Art. 42.2 de la LGIPE prevé que las consejerías participen hasta en <b>cuatro</b> comisiones
+      <b>permanentes</b> por un periodo de tres años. Las comisiones temporales y otros órganos no
+      cuentan para ese límite. <b>Todas</b> las permanentes cuentan, incluida la de Verificación de
+      Integridad en Candidaturas.</p>
+      <p>La matriz señala tres niveles en la columna «Total comisiones»:</p>
+      <ul>
+        <li><b>Hasta 4</b> — sin marca: es lo previsto en la ley y el resultado deseable del consenso.</li>
+        <li><b>Exactamente 5</b> — en <b>ámbar</b>: la matriz lo admite.</li>
+        <li><b>6 o más</b> — en <b>rojo</b>: rebasa el límite. Además se avisa al marcar y la comisión
+        lleva el sello <b>«rebasa el tope»</b> al pie.</li>
+      </ul>
+      <p>En ningún caso se <b>impide</b> la asignación, para no trabar la discusión: la verificación y la
+      conclusión no se bloquean. El exceso queda a la vista como decisión consciente de quien integra,
+      no como un descuido del sistema.</p>
+    </div>
+
+    <div class="regla">
+      <h3>Expresión de intereses</h3>
+      <p>El botón «Expresar intereses» abre una capa aparte donde cada consejería marca libremente las
+      comisiones que le interesan, indicando si va como integrante o proponiéndose a la presidencia
+      (pueden proponerse varias). Ahí se advierten <b>todas</b> las reglas (paridad, presidencia,
+      rotación de la presidencia y de la integración, y el límite de cinco permanentes); el tope de
+      integrantes por comisión y el límite de permanentes sólo advierten, no bloquean. Con «Volcar
+      intereses → integración» se traslada a la integración real (reemplazándola) para depurar y
+      verificar.</p>
+    </div>
+
+    <div class="regla">
+      <h3>Comisiones temporales y otros órganos <span class="aplica">la matriz lo verifica</span></h3>
+      <ul>
+        <li>Las comisiones temporales siempre son presididas por una Consejera o Consejero Electoral
+        y se integran con un mínimo de 3 y un máximo de 5 consejerías, bajo el principio de paridad.</li>
+        <li>La Comisión de Presupuesto 2027 y la de Seguimiento de los Procesos Electorales Locales
+        2025-2026 conservan su <b>integración bloqueada</b>: no se editan en la matriz.</li>
+        <li>El <b>Comité Editorial</b> se integra con 2 personas, bajo paridad, y lo preside
+        automáticamente quien presida la Comisión de Capacitación Electoral y Educación Cívica;
+        esa persona debe además estar <b>integrada</b> al Comité (no puede presidir sin integrarlo).</li>
+      </ul>
+    </div>
+
+    <div class="regla">
+      <h3>Integración de las comisiones <span class="aplica">la matriz lo verifica</span></h3>
+      <ul>
+        <li>Regla general: las comisiones no fijas se integran con un mínimo de 3 y un máximo de 5
+            consejerías (se admite 4). <span class="art">Art. 10.4 RC · Art. 42.4 LGIPE</span></li>
+        <li>Excepciones: Fiscalización se integra con 5; Vinculación con OPLE con 4, designados
+            con al menos 8 votos; Quejas y Denuncias con 3. <span class="art">Arts. 10.1 a 10.3 RC</span></li>
+        <li>Las demás consejerías pueden acudir con derecho a voz.</li>
+      </ul>
+    </div>
+
+    <div class="regla">
+      <h3>Orden de prelación de suplencias <span class="art">Art. 44.2.c RQD</span></h3>
+      <p>La Comisión de Quejas y Denuncias tiene, además de sus tres titulares, una lista ordenada de
+      suplentes (orden de prelación), que se renueva cada tres años al renovarse las consejerías o la
+      integración. En su columna, cada consejería no titular tiene un selector para elegir su posición
+      (1º, 2º, 3º…). Ser suplente <b>no</b> cuenta como integrar la comisión ni para el límite de cinco
+      comisiones permanentes.</p>
+    </div>
+
+    <div class="regla">
+      <h3>Paridad <span class="art">Art. 10.5 RC</span><span class="aplica">la matriz lo verifica</span></h3>
+      <p>Debe observarse en la integración de las comisiones, de forma asimétrica: las mujeres pueden
+      ser mayoría sin límite —incluida una integración totalmente femenina—, pero los hombres solo
+      pueden superar a las mujeres por, cuando mucho, un integrante.</p>
+      <ul>
+        <li>Ejemplo en comisiones de 3: 3M–0H, 2M–1H, 1M–2H son válidas; 0M–3H no.</li>
+        <li>Ejemplo en comisiones de 4: 4M–0H, 3M–1H, 2M–2H son válidas; 1M–3H y 0M–4H no.</li>
+        <li>Ejemplo en comisiones de 5: 5M–0H, 4M–1H, 3M–2H, 2M–3H son válidas; 1M–4H y 0M–5H no.</li>
+      </ul>
+    </div>
+
+    <div class="regla">
+      <h3>Verificación individual <span class="aplica">la matriz lo verifica</span></h3>
+      <p>Por cada comisión modificable, su botón revisa: integración completa, ausencia de
+      duplicidades, paridad, rotación de la presidencia y rotación de la integración. El límite de
+      permanentes por consejería <b>no</b> se revisa aquí: sólo advierte y no impide verificar. Si la
+      integración cambia después de verificar, la verificación caduca y debe repetirse.</p>
+    </div>
+
+    <div class="regla">
+      <h3>Representaciones partidistas <span class="art">Art. 10.6 RC</span></h3>
+      <p>Participan con voz y sin voto, salvo en las comisiones del Servicio Profesional Electoral
+      Nacional, Quejas y Denuncias, Fiscalización, y Transparencia, Acceso a la Información y
+      Protección de Datos Personales.</p>
+    </div>
+
+    <div class="regla">
+      <h3>Fusión durante el proceso electoral <span class="art">Arts. 5.1 y 10.7 RC</span></h3>
+      <p>Organización Electoral y Capacitación Electoral se fusionan y se integran con un mínimo de 3
+      y un máximo de 5. El Consejo General designa en septiembre a su presidencia e integrantes, y la
+      Secretaría Técnica la define quien asuma la presidencia.</p>
+    </div>
+
+    <div class="regla">
+      <h3>Nota</h3>
+      <p>La Comisión de Verificación de Integridad en Candidaturas aún no tiene definición
+      de Secretaría Técnica.</p>
+    </div>
+
+  </div>
+
+  <div class="dlg-pie" style="display:block;font-size:12px;color:#8b8f99;line-height:1.5">
+    Por cada comisión modificable la matriz verifica: integración completa, ausencia de duplicidades,
+    paridad de género, rotación de la presidencia y rotación de la integración. El límite de cinco
+    comisiones permanentes por consejería se advierte pero no bloquea. La fusión durante el proceso
+    electoral se revisa fuera del sistema.
+  </div>
+</dialog>
+
+<dialog id="dlgHallazgos">
+  <div class="dlg-cab">
+    <h3>Hallazgos · expresión de intereses</h3>
+    <div style="display:flex;gap:8px">
+      <button onclick="imprimirHallazgos()">Imprimir o guardar PDF</button>
+      <button onclick="document.getElementById('dlgHallazgos').close()">Cerrar</button>
+    </div>
+  </div>
+  <div class="dlg-cuerpo" id="cuerpoHallazgos"></div>
+</dialog>
+
+<dialog id="dlgConfig">
+  <div class="dlg-cab">
+    <h3>Disponibilidad de la captura</h3>
+    <button onclick="document.getElementById('dlgConfig').close()">Cerrar</button>
+  </div>
+  <div class="dlg-cuerpo">
+    <p class="cfg-nota">Define hasta cuándo pueden capturar las consejerías. La administración nunca queda sujeta a esta ventana.</p>
+    <label class="cfg-campo">
+      <span>Habilitada</span>
+      <select id="cfgHabilitado">
+        <option value="1">Sí, la captura está abierta</option>
+        <option value="0">No, cerrada de inmediato</option>
+      </select>
+    </label>
+    <label class="cfg-campo">
+      <span>Cierre (hora de la Ciudad de México, formato 24 h)</span>
+      <input type="datetime-local" id="cfgCierra">
+    </label>
+    <p class="cfg-nota">Déjalo en blanco para no fijar fecha límite. Para <b>reabrir</b>, mueve el cierre a más tarde y guarda: se aplica a todos en unos segundos.</p>
+  </div>
+  <div class="dlg-pie">
+    <button onclick="cerrarAhora()">Cerrar ahora</button>
+    <button class="primario" onclick="guardarConfig()">Guardar</button>
+  </div>
+</dialog>
+
+<script src="catalogo.js"></script>
+<script>
+/* =====================================================================
+   VISTA NUEVA — contenedores por comisión + ficha por consejería.
+   Usa el MISMO catálogo (catalogo.js) y el MISMO API que la vista clásica;
+   no duplica datos ni reglas de catálogo. Escribe por /api/admin, así que
+   pide la clave de administrador.
+   ===================================================================== */
+const API = 'api';
+const LLAVE_SESION = 'comisiones-sesion';   // el mismo almacén que la vista clásica
+
+let rol = null;             // 'admin' | 'consejero'
+let adminPass = '';
+let miConsejero = null;     // id cuando el rol es consejero
+let miToken = '';
+let ventana = { abierta:true, cierra:null, habilitado:true };
+
+let marcas = {};            // { "idC|idK": { f:ISO, p?:true } }  — igual que la vista clásica
+let intereses = {};         // { "idC|idK": { p?:true } }  presencia = interés como integrante
+let modo = 'integracion';   // 'integracion' | 'intereses'
+let ultimaVersion = -1;
+let vista = 'comisiones';   // 'comisiones' | 'detalle'
+let sel = null;             // consejería en detalle
+let drag = null;            // { id, origen }  origen: 'banco' | idComision
+let sobre = null;
+
+const esAdmin = () => rol === 'admin';
+/* Una consejería SÓLO se ve a sí misma. El servidor ya filtra sus intereses,
+   pero la pantalla listaba a las diez con cero marcas, lo que además dejaba
+   entrar a la ficha de otras personas. */
+const visibles = () => esAdmin() ? CONSEJERIAS : CONSEJERIAS.filter(c => c.id === miConsejero);
+const bloqueadaPorVentana = () => !esAdmin() && !ventana.abierta;
+/* La INTEGRACIÓN (marcas) sólo la escribe la administración: es lo que hace la
+   vista clásica y lo que impone el servidor, donde /api/admin exige la clave.
+   Las consejerías capturan sus INTERESES en el modo aparte —pendiente en esta
+   pantalla— donde sí tocan su propia fila y quedan sujetas a la ventana. */
+const puedeEditar = () => esAdmin();
+
+const clave = (c, k) => c + '|' + k;
+const esInt = () => modo === 'intereses';
+
+/* En intereses la fuente es `intereses`; en integración, `marcas`. Todo lo que
+   pinta la pantalla pasa por aquí, así que la vista es la misma en los dos
+   modos y sólo cambia de dónde lee. */
+const fuente     = () => esInt() ? intereses : marcas;
+const estaPuesta = (c, k) => fuente()[clave(c, k)] !== undefined;
+const preside    = (c, k) => { const r = fuente()[clave(c, k)]; return !!(r && r.p); };
+const integrantes = k => CONSEJERIAS.filter(c => estaPuesta(c.id, k.id));
+const permDe = idC => COMISIONES.filter(k => cuentaLimite(k) && estaPuesta(idC, k.id)).length;
+
+/* Comisiones que no cambian: en intereses vienen precargadas y no se editan. */
+const INTERES_FIJAS = ['seguimiento', 'presupuesto', 'verificacion'];
+const esFija = k => INTERES_FIJAS.includes(k.id);
+const ini = n => n.split(' ').filter(w => w.length > 2).slice(-2).map(w => w[0]).join('');
+
+/* Antigüedad en la comisión: el límite legal es de 3 años (Art. 42.2 LGIPE).
+   Se mide contra la fecha real de cada designación, no contra una fija,
+   porque vienen de acuerdos de distintos años. */
+const LIMITE_MESES = 36, AVISO_MESES = 33;
+function mesesDesde(iso){
+  const d = new Date(iso), hoy = new Date();
+  let m = (hoy.getFullYear()-d.getFullYear())*12 + (hoy.getMonth()-d.getMonth());
+  if(hoy.getDate() < d.getDate()) m--;
+  return Math.max(0, m);
+}
+const fechaCorta = iso => {
+  const d = new Date(iso), p = x => String(x).padStart(2,'0');
+  return p(d.getDate()) + '/' + p(d.getMonth()+1) + '/' + d.getFullYear();
+};
+/* Fecha de inicio con su alerta de antigüedad. En intereses no aplica: ahí
+   todavía no hay designación, sólo una intención. */
+function selloFecha(idC, idK){
+  if(esInt()) return '';
+  const r = marcas[clave(idC, idK)];
+  if(!r || !r.f) return '';
+  const m = mesesDesde(r.f);
+  const cls = m >= LIMITE_MESES ? ' excede' : m >= AVISO_MESES ? ' alerta' : '';
+  const t = m >= LIMITE_MESES ? 'Excede el límite de 3 años en esta comisión'
+          : m >= AVISO_MESES  ? 'Próxima a cumplir 3 años en esta comisión' : '';
+  return '<em class="desde' + cls + '"' + (t ? ' title="' + t + '"' : '') + '>' +
+         fechaCorta(r.f) + '</em>';
+}
+
+/* =====================================================================
+   REGLAS
+   Dos rotaciones INDEPENDIENTES, contra el historial 2020-2026:
+     · PRESIDENCIA — cada año, contra el corte más reciente.
+     · INTEGRACIÓN — al menos cada tres años, contra el corte de hace tres.
+       Cuenta igual que entre alguien nuevo o que salga quien estaba.
+   ===================================================================== */
+const presidenteActual = k => {
+  if(k.autoPresi){
+    const base = COMISIONES.find(x => x.id === k.autoPresi);
+    return base ? presidenteActual(base) : null;
+  }
+  const c = CONSEJERIAS.find(x => preside(x.id, k.id));
+  return c ? c.id : null;
+};
+/* La presidencia del Comité Editorial no se designa: la hereda de quien
+   presida Capacitación Electoral (autoPresi). Para pintar hay que mirar la
+   herencia, no la marca, porque en el Comité no existe la marca. */
+const presideEnPantalla = (idC, k) => k.autoPresi ? presidenteActual(k) === idC : preside(idC, k.id);
+
+const baseMiembros   = k => new Set((CORTE_INTEGRACION && CORTE_INTEGRACION.integracion[k.id] || { m: [] }).m);
+const basePresidente = k => { const c = CORTE_PRESIDENCIA && CORTE_PRESIDENCIA.integracion[k.id]; return c && c.p ? c.p : null; };
+const rotacionAplica   = k => comparacionAplica(k) && !k.refrendoPresidencia && basePresidente(k) !== null;
+const renovacionAplica = k => comparacionAplica(k) && baseMiembros(k).size > 0;
+
+function rotacionOK(k){
+  if(!rotacionAplica(k)) return true;
+  const p = presidenteActual(k);
+  return p !== null && p !== basePresidente(k);
+}
+function renovacionOK(k){
+  if(!renovacionAplica(k)) return true;
+  const base = baseMiembros(k);
+  const ahora = new Set(integrantes(k).map(c => c.id));
+  for(const id of ahora) if(!base.has(id)) return true;   // entró alguien
+  for(const id of base)  if(!ahora.has(id)) return true;  // salió alguien
+  return false;
+}
+
+/* Una comisión cuenta como cumplida si no tiene incumplimientos, o si su
+   integración ya está resuelta y no se toca: las bloqueadas por acuerdo y, en
+   intereses, las precargadas. Antes se excluían del denominador y quedaban
+   líneas como «10 comisiones · 3 de 9 en regla», que no cuadran entre sí. */
+function cumple(k){
+  if(!esModificable(k)) return true;               // bloqueada por acuerdo
+  if(esInt() && esFija(k)) return true;            // precargada: no cambia
+  return (esInt() ? problemasInteres(k) : problemas(k)).length === 0;
+}
+
+function problemas(k){
+  const l = integrantes(k), p = [];
+  if(l.length < k.min) p.push('faltan ' + (k.min - l.length));
+  if(l.length > k.max) p.push('sobra' + (l.length - k.max > 1 ? 'n ' : ' ') + (l.length - k.max));
+  const h = l.filter(c => c.sexo === 'H').length, m = l.filter(c => c.sexo === 'M').length;
+  if(h - m > 1) p.push('sin paridad');
+
+  /* Presidencia y su rotación van ENCADENADAS, no en paralelo: si todavía no
+     hay presidencia, no hay nada que haya rotado o dejado de rotar, y anunciar
+     las dos a la vez se contradice. La rotación sólo se juzga cuando ya se
+     designó a alguien. */
+  if(k.autoPresi){
+    const pa = presidenteActual(k);
+    if(pa === null) p.push('sin presidencia');
+    else if(!estaPuesta(pa, k.id)) p.push('quien preside Capacitación no está integrado');
+    else if(!rotacionOK(k)) p.push('sin rotación de la presidencia');
+  }else{
+    const presis = l.filter(c => preside(c.id, k.id)).length;
+    if(presis === 0)      p.push('sin presidencia');
+    else if(presis > 1)   p.push('varias presidencias');
+    else if(!rotacionOK(k)) p.push('sin rotación de la presidencia');
+  }
+
+  if(!renovacionOK(k)) p.push('sin rotación de la integración');
+  return p;
+}
+
+/* El límite de permanentes advierte, no invalida: no entra en problemas(). */
+function avisos(k){
+  if(!esPermanente(k)) return [];
+  const quienes = integrantes(k).filter(c => permDe(c.id) > MAX_POR_CONSEJERIA).map(c => c.corto);
+  return quienes.length ? ['rebasa el límite de ' + MAX_POR_CONSEJERIA + ': ' + quienes.join(', ')] : [];
+}
+
+/* =====================================================================
+   ACCESO — misma mecánica que la vista clásica: cada consejería elige su
+   nombre y establece su contraseña la primera vez; después entra con ella y
+   el servidor emite un token. La administración entra con su clave.
+   ===================================================================== */
+const err = t => { document.getElementById('errorAcceso').textContent = t || ''; };
+
+function llenarPortada(){
+  document.getElementById('selConsejero').innerHTML =
+    '<option value="">— elige tu nombre —</option>' +
+    CONSEJERIAS.map(c => '<option value="' + c.id + '">' + c.nombre + '</option>').join('');
+}
+
+let primerAcceso = false;
+async function revisarConsejero(){
+  const id  = document.getElementById('selConsejero').value;
+  const c1  = document.getElementById('claveCons');
+  const c2  = document.getElementById('claveCons2');
+  const hint= document.getElementById('hintCons');
+  const btn = document.getElementById('btnCons');
+  c1.value = ''; c2.value = ''; err('');
+  if(!id){ c2.style.display = 'none'; hint.textContent = ''; btn.textContent = 'Entrar'; return; }
+  try{
+    const r = await fetch(API + '/consejero/estado', {
+      method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ consejero: id })
+    });
+    const j = await r.json();
+    primerAcceso = !j.tienePassword;
+    c2.style.display = primerAcceso ? '' : 'none';
+    hint.textContent = primerAcceso
+      ? 'Primer acceso: establece tu contraseña (mínimo 8 caracteres). Nadie más la conoce.'
+      : '';
+    btn.textContent = primerAcceso ? 'Crear contraseña y entrar' : 'Entrar';
+  }catch(e){ err('No se pudo conectar con el servidor.'); }
+}
+
+async function accederConsejero(){
+  const id = document.getElementById('selConsejero').value;
+  const p1 = document.getElementById('claveCons').value;
+  const p2 = document.getElementById('claveCons2').value;
+  err('');
+  if(!id) return err('Elige tu nombre.');
+  if(primerAcceso){
+    if(p1.length < 8)  return err('La contraseña debe tener al menos 8 caracteres.');
+    if(p1 !== p2)      return err('Las contraseñas no coinciden.');
+  }else if(!p1)        return err('Escribe tu contraseña.');
+
+  const ruta = primerAcceso ? '/consejero/registrar' : '/consejero/login';
+  try{
+    const r = await fetch(API + ruta, {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ consejero: id, clave: p1 })
+    });
+    const j = await r.json();
+    if(!j.ok) return err(j.error || 'No se pudo entrar.');
+    rol = 'consejero'; miConsejero = id; miToken = j.token; adminPass = '';
+    try{ localStorage.setItem(LLAVE_SESION, JSON.stringify({ token: miToken, consejero: id })); }catch(e){}
+    await iniciar();
+  }catch(e){ err('No se pudo conectar con el servidor.'); }
+}
+
+async function entrarAdmin(){
+  const c = document.getElementById('claveAdmin').value;
+  err('');
+  if(!c) return err('Escribe la clave de administración.');
+  try{
+    const r = await fetch(API + '/admin/login', {
+      method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ clave: c })
+    });
+    const j = await r.json();
+    if(!j.ok) return err('Clave incorrecta.');
+    rol = 'admin'; adminPass = c; miConsejero = null; miToken = '';
+    await iniciar();
+  }catch(e){ err('No se pudo conectar con el servidor.'); }
+}
+
+function salir(){
+  rol = null; adminPass = ''; miConsejero = null; miToken = ''; ultimaVersion = -1;
+  try{ localStorage.removeItem(LLAVE_SESION); }catch(e){}
+  location.reload();
+}
+
+/* Reanuda la sesión de consejería si el token guardado sigue siendo válido. */
+async function intentarReanudar(){
+  let g = null; try{ g = JSON.parse(localStorage.getItem(LLAVE_SESION)); }catch(e){}
+  if(!g || !g.token) return false;
+  try{
+    const r = await fetch(API + '/consejero/sesion', {
+      method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ token: g.token })
+    });
+    const j = await r.json();
+    if(!j.ok || !j.consejero) return false;
+    rol = 'consejero'; miConsejero = j.consejero; miToken = g.token;
+    await iniciar();
+    return true;
+  }catch(e){ return false; }
+}
+
+async function iniciar(){
+  document.getElementById('portada').style.display = 'none';
+  document.getElementById('btnClaves').style.display  = esAdmin() ? '' : 'none';
+  document.getElementById('btnVentana').style.display = esAdmin() ? '' : 'none';
+  document.getElementById('btnModo').style.display      = esAdmin() ? '' : 'none';
+  document.getElementById('btnReporte').style.display   = esAdmin() ? '' : 'none';
+  document.getElementById('btnRestaurar').style.display = esAdmin() ? '' : 'none';
+  /* Una consejería no edita la integración: su pantalla es la de intereses. */
+  if(!esAdmin()){ modo = 'intereses'; sel = miConsejero; }
+  try{ await cargarHistorial(); }
+  catch(e){ aviso('No se pudo cargar el historial: las rotaciones no se verificarán.'); }
+  await cargarEstado();
+  setInterval(sondear, 3000);
+}
+
+/* =====================================================================
+   TEMPORALIDAD — ventana de captura de las consejerías
+   ===================================================================== */
+function pintarBanda(){
+  const chip = document.getElementById('captura');
+  chip.style.display = '';
+  chip.className = 'captura ' + (ventana.abierta ? 'si' : 'no');
+  chip.textContent = ventana.abierta
+    ? (ventana.cierra ? 'Captura abierta hasta el ' + fechaLegible(ventana.cierra) : 'Captura abierta')
+    : 'Captura cerrada';
+  chip.title = esAdmin()
+    ? 'Disponibilidad de la captura para las consejerías. La administración no queda sujeta a esta ventana.'
+    : 'Estado de tu captura.';
+
+  const b = document.getElementById('banda');
+  document.body.classList.toggle('solo-lectura', bloqueadaPorVentana());
+  if(esAdmin()){
+    b.innerHTML = ventana.abierta
+      ? ''
+      : '<div class="banda abierta">La captura de las consejerías está cerrada. Como administración puedes seguir editando.</div>';
+    return;
+  }
+  b.innerHTML = ventana.abierta
+    ? (ventana.cierra ? '<div class="banda abierta">Tu captura está abierta hasta el ' + fechaLegible(ventana.cierra) + '.</div>' : '')
+    : '<div class="banda cerrada">La captura está cerrada. Para cambios, contacta a la Secretaría Ejecutiva.</div>';
+}
+function fechaLegible(s){
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(s || ''));
+  if(!m) return String(s || '');
+  return m[3] + '/' + m[2] + '/' + m[1] + ' a las ' + m[4] + ':' + m[5] + ' h';
+}
+async function abrirConfig(){
+  try{
+    const r = await fetch(API + '/config');
+    const c = await r.json();
+    document.getElementById('cfgHabilitado').value = c.habilitado ? '1' : '0';
+    document.getElementById('cfgCierra').value = c.cierra || '';
+  }catch(e){}
+  const d = document.getElementById('dlgConfig');
+  if(d.showModal) d.showModal(); else d.setAttribute('open','');
+}
+async function guardarConfig(){
+  const habilitado = document.getElementById('cfgHabilitado').value === '1';
+  const cierra = document.getElementById('cfgCierra').value || null;
+  try{
+    const r = await fetch(API + '/config', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin': adminPass },
+      body: JSON.stringify({ habilitado: habilitado, cierra: cierra })
+    });
+    const j = await r.json();
+    if(j.error) return aviso(j.error);
+    ventana = j; pintarBanda(); pintar();
+    document.getElementById('dlgConfig').close();
+    aviso('Disponibilidad actualizada.');
+  }catch(e){ aviso('No se pudo guardar la disponibilidad.'); }
+}
+async function cerrarAhora(){
+  document.getElementById('cfgHabilitado').value = '0';
+  await guardarConfig();
+}
+
+/* =====================================================================
+   CONTRASEÑAS — quién ya tiene y restablecer (sólo administración)
+   ===================================================================== */
+async function verClaves(){
+  let tiene = {};
+  try{
+    const r = await fetch(API + '/consejeros', { headers:{ 'X-Admin': adminPass } });
+    tiene = await r.json();
+  }catch(e){ return aviso('No se pudo consultar las contraseñas.'); }
+  document.getElementById('cuerpoClaves').innerHTML = CONSEJERIAS.map(c =>
+    '<div class="fila-clave">' +
+      '<span class="nom">' + c.nombre + '</span>' +
+      '<span class="edo ' + (tiene[c.id] ? 'si' : 'no') + '">' +
+        (tiene[c.id] ? 'con contraseña' : 'sin establecer') + '</span>' +
+      (tiene[c.id] ? '<button data-reset="' + c.id + '">Restablecer</button>' : '') +
+    '</div>').join('') +
+    '<p class="cfg-nota" style="margin-top:14px">Al restablecer, esa consejería vuelve a elegir contraseña la próxima vez que entre, y sus sesiones abiertas se cierran.</p>';
+  const d = document.getElementById('dlgClaves');
+  if(d.showModal) d.showModal(); else d.setAttribute('open','');
+}
+async function restablecer(id){
+  const c = CONSEJERIAS.find(x => x.id === id);
+  if(!confirm('¿Restablecer la contraseña de ' + c.nombre + '?\n\nTendrá que elegir una nueva la próxima vez que entre.')) return;
+  try{
+    await fetch(API + '/consejero/reset', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin': adminPass },
+      body: JSON.stringify({ consejero: id })
+    });
+    aviso('Contraseña de ' + c.corto + ' restablecida.');
+    verClaves();
+  }catch(e){ aviso('No se pudo restablecer.'); }
+}
+
+/* ---------- Estado compartido ---------- */
+async function cargarEstado(){
+  const r = await fetch(API + '/estado', {
+    headers:{ 'X-Token': miToken || '', 'X-Admin': adminPass || '' }
+  });
+  const j = await r.json();
+  marcas = j.marcas || {};
+  /* El servidor ya filtra: una consejería sólo recibe SUS intereses. */
+  intereses = j.intereses || {};
+  ultimaVersion = j.version || 0;
+  if(j.config) ventana = j.config;
+  pintarBanda();
+  pintar();
+}
+/* El sondeo vigila también `abierta`: el cierre por hora no cambia la versión,
+   así que la pantalla debe reaccionar igual (≤3 s). */
+async function sondear(){
+  try{
+    const r = await fetch(API + '/version');
+    const j = await r.json();
+    if(j.version !== ultimaVersion) return await cargarEstado();
+    if(typeof j.abierta === 'boolean' && j.abierta !== ventana.abierta){
+      ventana = Object.assign({}, ventana, { abierta: j.abierta });
+      pintarBanda(); pintar();
+    }
+  }catch(e){}
+}
+async function guardar(){
+  try{
+    const r = await fetch(API + '/admin', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'X-Admin': adminPass },
+      body: JSON.stringify({ marcas: marcas })
+    });
+    const j = await r.json();
+    if(j.version) ultimaVersion = j.version;
+  }catch(e){ aviso('No se pudo guardar; revisa la conexión.'); }
+}
+
+let tAviso;
+function aviso(t){
+  const d = document.getElementById('aviso');
+  d.textContent = t; d.classList.add('visible');
+  clearTimeout(tAviso); tAviso = setTimeout(() => d.classList.remove('visible'), 3200);
+}
+
+/* ---------- Mutaciones (conservan la fecha de inicio) ---------- */
+function poner(idC, idK){
+  const k = COMISIONES.find(x => x.id === idK);
+  if(k.bloqueada) return aviso(k.nombre + ' tiene integración bloqueada.');
+  if(!puedeEditar()) return aviso(mensajeSinPermiso());
+  if(estaPuesta(idC, idK)) return;
+  /* El cupo de la comisión advierte, no impide: se puede pasar del máximo y
+     queda marcado como «sobra N», igual que en el sistema anterior. */
+  const sobrará = integrantes(k).length + 1 > k.max;
+  marcas[clave(idC, idK)] = { f: new Date().toISOString() };
+  if(sobrará) aviso(k.nombre + ' queda con ' + integrantes(k).length + ' integrantes y su máximo es ' + k.max + '.');
+  const n = permDe(idC);
+  if(cuentaLimite(k) && n > MAX_POR_CONSEJERIA){
+    const c = CONSEJERIAS.find(x => x.id === idC);
+    aviso(c.nombre + ' queda con ' + n + ' permanentes y rebasa el límite de ' + MAX_POR_CONSEJERIA + '.');
+  }
+  guardar(); pintar();
+}
+function mensajeSinPermiso(){
+  return 'La integración la edita la administración. Las consejerías capturan sus intereses en el modo correspondiente.';
+}
+
+/* =====================================================================
+   MODO INTERESES — cada consejería marca lo que le interesa; el volcado a la
+   integración es acción exclusiva de la administración.
+   ===================================================================== */
+function alternarModo(){
+  if(!esAdmin()) return;                       // el consejero siempre está en intereses
+  modo = esInt() ? 'integracion' : 'intereses';
+  vista = 'comisiones';
+  pintar();
+}
+
+/* Quién puede tocar la fila `idC` en modo intereses. */
+function puedeInteres(idC){
+  if(esAdmin()) return true;
+  return idC === miConsejero && ventana.abierta;
+}
+
+async function enviarInteres(idC, idK, cuerpo){
+  try{
+    const r = await fetch(API + '/interes', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'X-Token': miToken || '', 'X-Admin': adminPass || '' },
+      body: JSON.stringify(Object.assign({ consejero: idC, comision: idK }, cuerpo))
+    });
+    const j = await r.json();
+    if(j.error){ aviso(j.error); await cargarEstado(); return; }
+    if(j.version) ultimaVersion = j.version;
+  }catch(e){ aviso('No se pudo guardar el interés.'); }
+}
+
+function alternarInteres(idC, idK){
+  const k = COMISIONES.find(x => x.id === idK);
+  if(esFija(k)) return aviso(k.nombre + ' ya está integrada y no cambia.');
+  if(bloqueadaPorVentana()) return aviso('La captura está cerrada. Para cambios, contacta a la Secretaría Ejecutiva.');
+  if(!puedeInteres(idC)) return aviso('Sólo puedes capturar en tu propia fila.');
+  const key = clave(idC, idK);
+  const quitar = intereses[key] !== undefined;
+  if(quitar) delete intereses[key]; else intereses[key] = {};
+  pintar();                                     // optimista
+  enviarInteres(idC, idK, { quitar: quitar });
+}
+
+/* En intereses la presidencia es una PROPUESTA: pueden ser varias por comisión,
+   a diferencia de la integración, donde sólo hay una. */
+function proponerPresi(idC, idK){
+  const k = COMISIONES.find(x => x.id === idK);
+  if(esFija(k)) return aviso(k.nombre + ' ya está integrada y no cambia.');
+  if(bloqueadaPorVentana()) return aviso('La captura está cerrada. Para cambios, contacta a la Secretaría Ejecutiva.');
+  if(!puedeInteres(idC)) return aviso('Sólo puedes capturar en tu propia fila.');
+  const r = intereses[clave(idC, idK)];
+  if(!r) return aviso('Primero marca tu interés en la comisión.');
+  const ya = !!r.p;
+  if(ya) delete r.p; else r.p = true;
+  pintar();
+  enviarInteres(idC, idK, { presidencia: !ya });
+}
+
+/* Volcado: SÓLO administración. Reemplaza la integración con los intereses. */
+async function volcarIntereses(){
+  if(!esAdmin()) return aviso('El volcado lo realiza la administración.');
+  const pendientes = COMISIONES.filter(k => esModificable(k) && !esFija(k) && problemasInteres(k).length);
+  if(pendientes.length)
+    return aviso('No se puede volcar: ' + pendientes.length + ' comisión' + (pendientes.length > 1 ? 'es' : '') +
+      ' aún no cumple' + (pendientes.length > 1 ? 'n' : '') + ' (' +
+      pendientes.slice(0, 3).map(k => k.nombre).join(', ') + (pendientes.length > 3 ? '…' : '') + '). Vea Hallazgos.');
+  if(!confirm('Se REEMPLAZARÁ la integración actual con los intereses expresados.\n\n' +
+              'Las comisiones bloqueadas conservan su integración. ¿Continuar?')) return;
+
+  const nuevas = {};
+  COMISIONES.forEach(k => {
+    if(!esModificable(k)){                       // bloqueadas: se conservan tal cual
+      CONSEJERIAS.forEach(c => { const r = marcas[clave(c.id, k.id)]; if(r) nuevas[clave(c.id, k.id)] = r; });
+      return;
+    }
+    CONSEJERIAS.forEach(c => {
+      const r = intereses[clave(c.id, k.id)];
+      if(!r) return;
+      const previa = marcas[clave(c.id, k.id)];   // conserva la fecha de inicio si ya integraba
+      const reg = { f: previa ? previa.f : new Date().toISOString() };
+      if(r.p) reg.p = true;
+      nuevas[clave(c.id, k.id)] = reg;
+    });
+  });
+  marcas = nuevas;
+  await guardar();
+  modo = 'integracion';
+  pintar();
+  aviso('Intereses volcados a la integración.');
+}
+
+async function limpiarIntereses(){
+  if(!esAdmin()) return;
+  if(!confirm('Se borrarán las expresiones de interés. La integración real no se toca. ¿Continuar?')) return;
+  intereses = {};
+  try{
+    await fetch(API + '/admin', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'X-Admin': adminPass },
+      body: JSON.stringify({ intereses: {} })
+    });
+  }catch(e){ return aviso('No se pudo limpiar.'); }
+  pintar();
+  aviso('Intereses vacíos.');
+}
+
+/* Reglas en modo intereses: el tope de integrantes sólo advierte, y la
+   presidencia debe quedar en UNA sola propuesta para poder volcar. */
+function problemasInteres(k){
+  const l = integrantes(k), p = [];
+  const n = l.length;
+  if(n === 0){ p.push('sin interés'); return p; }
+  if(n > k.max) p.push('sobra' + (n - k.max > 1 ? 'n ' : ' ') + (n - k.max));
+  else if(n < k.min) p.push('faltan ' + (k.min - n));
+  const h = l.filter(c => c.sexo === 'H').length, m = l.filter(c => c.sexo === 'M').length;
+  if(h - m > 1) p.push('sin paridad');
+  if(!k.autoPresi){
+    const props = l.filter(c => preside(c.id, k.id)).length;
+    if(props === 0) p.push('sin presidencia');
+    else if(props > 1) p.push('varias presidencias');
+    else if(rotacionAplica(k)){
+      const quien = l.find(c => preside(c.id, k.id));
+      if(quien && quien.id === basePresidente(k)) p.push('sin rotación de la presidencia');
+    }
+  }
+  return p;
+}
+function quitar(idC, idK){
+  const k = COMISIONES.find(x => x.id === idK);
+  if(k.bloqueada) return aviso(k.nombre + ' tiene integración bloqueada.');
+  if(!puedeEditar()) return aviso(mensajeSinPermiso());
+  delete marcas[clave(idC, idK)];
+  guardar(); pintar();
+}
+function presidir(idC, idK){
+  const k = COMISIONES.find(x => x.id === idK);
+  if(k.bloqueada) return aviso(k.nombre + ' tiene integración bloqueada.');
+  if(!puedeEditar()) return aviso(mensajeSinPermiso());
+  const ya = preside(idC, idK);
+  CONSEJERIAS.forEach(c => { const r = marcas[clave(c.id, idK)]; if(r) delete r.p; });
+  if(!ya){
+    const r = marcas[clave(idC, idK)];
+    if(!r) return;
+    r.p = true;
+  }
+  guardar(); pintar();
+}
+
+/* ---------- Pintado ---------- */
+function pintar(){
+  if(esAdmin()){
+    const enRegla = COMISIONES.filter(cumple).length;
+    document.getElementById('marcador').textContent =
+      (esInt() ? 'Intereses · ' : '') + enRegla + ' de ' + COMISIONES.length + ' en regla';
+  }else{
+    /* A una consejería sólo se le informa de lo suyo: el agregado saldría de
+       datos parciales —no ve los intereses ajenos— y sería falso. */
+    const mias = COMISIONES.filter(k => estaPuesta(miConsejero, k.id)).length;
+    document.getElementById('marcador').textContent =
+      'Has marcado ' + mias + (mias === 1 ? ' comisión' : ' comisiones');
+  }
+  document.body.classList.toggle('modo-intereses', esInt());
+  if(esAdmin()){
+    document.getElementById('btnModo').textContent = esInt() ? 'Ver integración' : 'Expresar intereses';
+    document.getElementById('btnVolcar').style.display    = esInt() ? '' : 'none';
+    document.getElementById('btnLimpInt').style.display   = esInt() ? '' : 'none';
+    document.getElementById('btnHallazgos').style.display = '';
+  }
+  document.getElementById('subtitulo').textContent =
+    vista === 'detalle'  ? 'Ficha de la consejería · toca una comisión para integrarla o quitarla'
+    : esInt() && esAdmin() ? 'Intereses expresados por las consejerías · el volcado es acción de administración'
+    : esInt()              ? 'Marca las comisiones que te interesan · la «P» propone la presidencia'
+    : 'Arrastra una consejería a la comisión · toca su nombre para ver su ficha';
+  document.getElementById('cuerpo').innerHTML =
+    vista === 'comisiones' ? vistaComisiones() : vistaDetalle();
+}
+
+function fichaBanco(c, extra){
+  const n = permDe(c.id);
+  const cls = n > MAX_POR_CONSEJERIA ? 'excede' : n === MAX_POR_CONSEJERIA ? 'lleno' : '';
+  return '<div class="ficha ' + (extra || '') + (drag && drag.id === c.id ? ' arrastrando' : '') + '"' +
+    ' draggable="true" data-c="' + c.id + '">' +
+    '<span class="avatar">' + ini(c.nombre) + '</span>' +
+    '<span class="nom">' + c.corto + '</span>' +
+    '<span class="n ' + cls + '">' + n + '</span>' +
+    '<span class="ir">›</span></div>';
+}
+
+function vistaComisiones(){
+  const banco = '<div class="banco' + (drag && drag.origen !== 'banco' ? ' soltar' : '') + '" id="banco">' +
+    '<h3>Consejerías</h3>' +
+    '<p class="ayuda">' + (drag && drag.origen !== 'banco'
+      ? 'Suelta aquí para quitarla de la comisión'
+      : esAdmin() ? 'Arrastra a una comisión, o toca para ver su ficha.'
+                  : 'Arrástrate a las comisiones que te interesan, o toca para ver tu ficha.') + '</p>' +
+    visibles().map(c => fichaBanco(c)).join('') + '</div>';
+
+  let rejilla = '';
+  ['permanente','temporal','otro'].forEach(g => {
+    const coms = COMISIONES.filter(k => k.grupo === g);
+    if(!coms.length) return;
+    rejilla += '<div class="grupo g-' + g + '">' + GRUPOS[g] +
+      '<span class="cuantas">' + coms.length + (coms.length === 1 ? ' comisión' : ' comisiones') +
+      (esAdmin() ? ' · ' + coms.filter(cumple).length + ' de ' + coms.length + ' en regla' : '') +
+      '</span></div>';
+    rejilla += coms.map(k => {
+      /* Cada modo tiene sus reglas: en intereses el tope sólo advierte y puede
+         haber varias presidencias propuestas. Antes la tarjeta usaba siempre
+         las de integración, así que Hallazgos y la caja se contradecían. */
+      const l = integrantes(k), probs = esInt() ? problemasInteres(k) : problemas(k);
+      /* Una comisión bloqueada (o fija en intereses) no se edita: se dibuja
+         rayada, con candado, y sus fichas van sin controles ni arrastre, para
+         que no ofrezca acciones que va a rechazar. */
+      const fija = !esModificable(k) || (esInt() && esFija(k));
+      /* Una comisión bloqueada SÍ cuenta como cumplida: su integración está
+         resuelta por acuerdo. Se dice explícitamente porque, si sólo dijera
+         «bloqueada» en gris, al contar a ojo parecería que no suma. */
+      const edo = fija ? '<span class="edo ok">' + (esInt() && esFija(k) && esModificable(k)
+                          ? 'Ya integrada · no cambia' : 'Bloqueada · cuenta en regla') + '</span>'
+        /* Una consejería no ve los intereses ajenos, así que evaluar la comisión
+           con lo que ella ve daría un estado falso. Se le muestra sólo lo suyo. */
+        : !esAdmin() ? '<span class="edo gris">' +
+            (estaPuesta(miConsejero, k.id) ? 'Marcaste tu interés' : 'Sin marcar') + '</span>'
+        : probs.length ? '<span class="edo mal">' + probs.join(' · ') + '</span>'
+        : '<span class="edo ok">En regla</span>';
+      const chips = l.map(c => {
+        const p = presideEnPantalla(c.id, k);
+        const heredada = !!k.autoPresi;      // no se designa aquí: se hereda
+        return '<div class="chip' + (p ? ' preside' : '') + (fija ? ' fija' : '') + '"' +
+          (fija ? '' : ' draggable="true"') + ' data-c="' + c.id + '" data-k="' + k.id + '">' +
+          '<span class="zona">' +
+            '<span class="avatar' + (p ? ' preside' : '') + '">' + ini(c.nombre) + '</span>' +
+            '<span class="nom">' + c.corto + selloFecha(c.id, k.id) + '</span></span>' +
+          (fija ? (p ? '<span class="p preside-fija">P</span>' : '')
+                : (heredada
+                    ? (p ? '<span class="p preside-fija" title="Preside por presidir Capacitación Electoral">P</span>' : '')
+                    : '<span class="p" data-p="' + c.id + '" data-pk="' + k.id + '">P</span>') +
+                  '<span class="x" data-x="' + c.id + '" data-xk="' + k.id + '">×</span>') +
+          '</div>';
+      }).join('');
+      return '<div class="caja-com' + (fija ? ' bloqueada' : '') + '"' +
+        (fija ? '' : ' data-drop="' + k.id + '"') + '>' +
+        '<div class="tit"><b>' + (fija ? '<span class="candado">🔒</span> ' : '') + k.nombre +
+          (k.autoPresi ? '<em class="hereda">preside quien presida Capacitación</em>' : '') + '</b>' +
+          '<span class="cupo">' + (esAdmin() ? l.length + ' / ' : '') +
+            (k.min === k.max ? k.min : k.min + '–' + k.max) + '</span></div>' +
+        edo +
+        '<div class="gente">' + (chips ||
+          '<div class="vacia">' + (fija ? 'Sin integrantes' : 'Arrastra aquí') + '</div>') + '</div></div>';
+    }).join('');
+  });
+
+  return '<div class="lienzo">' + banco + '<div class="rejilla">' + rejilla + '</div></div>';
+}
+
+function medidor(n){
+  let h = '';
+  for(let i = 0; i < 6; i++){
+    const cls = i >= n ? '' : i === 5 ? ' ex' : i === 4 ? ' lim' : ' on';
+    h += '<i class="' + cls.trim() + '"></i>';
+  }
+  return '<span class="medidor">' + h + '</span>';
+}
+
+function vistaDetalle(){
+  const c = CONSEJERIAS.find(x => x.id === sel);
+  const n = permDe(sel);
+  const cls = n > MAX_POR_CONSEJERIA ? 'excede' : n === MAX_POR_CONSEJERIA ? 'lleno' : '';
+  /* Mismo criterio que las tres cifras: las comisiones en decisión (noComputa)
+     no suman. Antes el total sí las contaba y quedaba «integra 10» junto a
+     cifras que sumaban 9. */
+  const total = COMISIONES.filter(k => computa(k) && estaPuesta(sel, k.id)).length;
+  const presideEn = COMISIONES.filter(k => computa(k) && preside(sel, k.id)).length;
+  const sinSumar = COMISIONES.filter(k => !computa(k) && estaPuesta(sel, k.id));
+  const porGrupo = g => COMISIONES.filter(k => k.grupo === g && computa(k) && estaPuesta(sel, k.id)).length;
+  const nTemp = porGrupo('temporal'), nOtros = porGrupo('otro');
+
+  const rail = '<div class="rail">' + visibles().map(x => {
+    const nn = permDe(x.id);
+    const cc = nn > MAX_POR_CONSEJERIA ? 'excede' : nn === MAX_POR_CONSEJERIA ? 'lleno' : '';
+    return '<div class="ficha' + (x.id === sel ? ' activa' : '') + '" data-sel="' + x.id + '">' +
+      '<span class="avatar">' + ini(x.nombre) + '</span>' +
+      '<span class="nom">' + x.corto + medidor(nn) + '</span>' +
+      '<span class="n ' + cc + '">' + nn + '</span></div>';
+  }).join('') + '</div>';
+
+  const lineas = grupo => COMISIONES.filter(k => grupo === 'p' ? esPermanente(k) : !esPermanente(k)).map(k => {
+    const l = integrantes(k), dentro = estaPuesta(sel, k.id);
+    /* Llena = ya está en su máximo. Se sigue pudiendo marcar; sólo se atenúa
+       para avisar que se va a rebasar el cupo. */
+    const llena = esAdmin() && !dentro && l.length >= k.max;
+    const p = presideEnPantalla(sel, k);
+    const malCupo = l.length < k.min || l.length > k.max;
+    return '<div class="linea' + (dentro ? ' dentro' : '') + (llena ? ' al-tope' : '') +
+      (esModificable(k) ? '' : ' llena') + '" data-tog="' + k.id + '">' +
+      '<span class="casilla">' + (dentro ? '✓' : '') + '</span>' +
+      '<span class="nom">' + k.nombre + '</span>' +
+      (dentro && !k.autoPresi && esModificable(k)
+        ? '<span class="p' + (p ? ' preside' : '') + '" data-p="' + sel + '" data-pk="' + k.id + '"' +
+        ' style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px;cursor:pointer;' +
+        (p ? 'background:var(--acento);color:#fff' : 'background:#f0eef3;color:#c3c6cd') + '">P</span>'
+       : (dentro && p && (k.autoPresi || !esModificable(k))
+            ? '<span class="p preside-fija" title="Preside por presidir Capacitación Electoral"' +
+              ' style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px">P</span>'
+            : '')) +
+      (computa(k) ? '' : '<span class="nosuma" title="Comisión en decisión: se muestra, pero no suma a los totales">no suma</span>') +
+      '<span class="cupo' + (esAdmin() && malCupo ? ' mal' : '') + '">' +
+        (esAdmin() ? l.length + '/' : '') + (k.min === k.max ? k.min : k.min + '–' + k.max) +
+      '</span></div>';
+  }).join('');
+
+  return '<div style="padding:16px 32px 28px">' +
+    '<div class="volver" id="volver">‹ Volver a comisiones</div>' +
+    '<div style="display:flex;gap:22px;align-items:flex-start">' + rail +
+      '<div class="detalle">' +
+        '<div class="cab"><div><h2>' + c.nombre + '</h2>' +
+          '<div class="sub">Integra ' + total + ' comisiones y preside ' + presideEn + '.' +
+            (sinSumar.length ? ' Además integra ' + sinSumar.map(k => k.nombre).join(' y ') +
+              ', que no suma' + (sinSumar.length > 1 ? 'n' : '') + ' a los totales.' : '') +
+          '</div></div>' +
+          '<div class="cifras">' +
+            '<div class="cifra"><b class="n ' + cls + '">' + n + '</b><span>permanentes</span></div>' +
+            '<div class="cifra"><b>' + nTemp + '</b><span>temporales</span></div>' +
+            '<div class="cifra"><b>' + nOtros + '</b><span>otros órganos</span></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="cols">' +
+          '<div><h4>Permanentes</h4>' + lineas('p') + '</div>' +
+          '<div><h4>Temporales y otros órganos</h4>' + lineas('t') + '</div>' +
+        '</div></div></div></div>';
+}
+
+/* ---------- Interacción (delegada, porque el HTML se regenera) ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-p],[data-x],[data-sel],[data-tog],#volver');
+  if(!t) return;
+  if(t.id === 'volver'){ vista = 'comisiones'; return pintar(); }
+  if(t.dataset.x !== undefined){ e.stopPropagation();
+    return esInt() ? alternarInteres(t.dataset.x, t.dataset.xk) : quitar(t.dataset.x, t.dataset.xk); }
+  if(t.dataset.p !== undefined){ e.stopPropagation();
+    return esInt() ? proponerPresi(t.dataset.p, t.dataset.pk) : presidir(t.dataset.p, t.dataset.pk); }
+  if(t.dataset.sel !== undefined){ sel = t.dataset.sel; return pintar(); }
+  if(t.dataset.tog !== undefined){
+    const k = COMISIONES.find(x => x.id === t.dataset.tog);
+    if(esInt()) return alternarInteres(sel, k.id);
+    return estaPuesta(sel, k.id) ? quitar(sel, k.id) : poner(sel, k.id);
+  }
+});
+
+/* La ficha de una consejería se abre SÓLO desde el banco. Dentro de una
+   comisión el chip no navega: ahí sólo se arrastra, se preside o se quita. */
+document.addEventListener('click', e => {
+  const f = e.target.closest('#banco .ficha');
+  if(f){ vista = 'detalle'; sel = f.dataset.c; drag = null; pintar(); }
+});
+
+/* Durante el arrastre NO se redibuja: pintar() regenera el HTML y el navegador
+   pierde el nodo que estás arrastrando, así que cancela el arrastre de
+   inmediato. Aquí sólo se tocan clases sobre nodos que ya existen; el
+   redibujado espera hasta soltar. */
+let cajaSobre = null;
+
+function limpiarArrastre(){
+  document.querySelectorAll('.arrastrando').forEach(n => n.classList.remove('arrastrando'));
+  if(cajaSobre){ cajaSobre.classList.remove('sobre'); cajaSobre = null; }
+  const b = document.getElementById('banco');
+  if(b) b.classList.remove('soltar');
+}
+
+document.addEventListener('dragstart', e => {
+  const chip  = e.target.closest('.chip[data-c]');
+  const ficha = e.target.closest('#banco .ficha');
+  const nodo  = chip || ficha;
+  if(!nodo) return;
+  /* En integración sólo la administración mueve; en intereses, tu propia fila. */
+  const id = chip ? chip.dataset.c : ficha.dataset.c;
+  if(esInt() ? !puedeInteres(id) : !puedeEditar()){ e.preventDefault(); return; }
+  drag = chip ? { id: chip.dataset.c, origen: chip.dataset.k }
+              : { id: ficha.dataset.c, origen: 'banco' };
+  try{
+    e.dataTransfer.setData('text/plain', drag.id);
+    e.dataTransfer.effectAllowed = 'move';
+  }catch(err){}
+  nodo.classList.add('arrastrando');
+  const b = document.getElementById('banco');
+  if(b && drag.origen !== 'banco') b.classList.add('soltar');
+});
+
+document.addEventListener('dragend', () => { limpiarArrastre(); drag = null; sobre = null; });
+
+document.addEventListener('dragover', e => {
+  if(!drag) return;
+  const caja  = e.target.closest('[data-drop]');
+  const banco = e.target.closest('#banco');
+  if(!caja && !banco) return;
+  e.preventDefault();                    // sin esto el navegador no deja soltar
+  try{ e.dataTransfer.dropEffect = 'move'; }catch(err){}
+  if(caja !== cajaSobre){
+    if(cajaSobre) cajaSobre.classList.remove('sobre');
+    cajaSobre = caja || null;
+    if(cajaSobre) cajaSobre.classList.add('sobre');
+  }
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-reset]');
+  if(b) restablecer(b.dataset.reset);
+});
+
+document.addEventListener('drop', e => {
+  const caja = e.target.closest('[data-drop]');
+  const banco = e.target.closest('#banco');
+  if(!caja && !banco) return;
+  e.preventDefault();
+  if(!drag) return;
+  limpiarArrastre();
+  const destino = caja ? caja.dataset.drop : 'banco';
+  const d = drag; drag = null; sobre = null;
+  if(d.origen === destino) return pintar();
+  if(esInt()){
+    if(d.origen !== 'banco') alternarInteres(d.id, d.origen);
+    if(destino !== 'banco')  alternarInteres(d.id, destino);
+    return;
+  }
+  if(d.origen !== 'banco') delete marcas[clave(d.id, d.origen)];
+  if(destino === 'banco'){ guardar(); return pintar(); }
+  poner(d.id, destino);
+});
+
+/* =====================================================================
+   RESTAURAR LA INTEGRACIÓN VIGENTE (sólo administración)
+   Vuelve a la integración sembrada en el catálogo, con sus fechas.
+   ===================================================================== */
+async function restaurarVigente(){
+  if(!esAdmin()) return;
+  if(!confirm('La matriz volverá a la integración vigente del catálogo (Acuerdo INE/CG241/2026) ' +
+              'y se perderán los cambios posteriores.\n\n¿Continuar?')) return;
+  const nuevas = {};
+  Object.keys(INTEGRACION_VIGENTE).forEach(idC => {
+    INTEGRACION_VIGENTE[idC].forEach(a => {
+      const reg = { f: new Date(a.fecha + 'T12:00:00').toISOString() };
+      if(a.presidencia) reg.p = true;
+      nuevas[clave(idC, a.comision)] = reg;
+    });
+  });
+  marcas = nuevas;
+  modo = 'integracion';
+  await guardar();
+  pintar();
+  aviso('Integración vigente restaurada.');
+}
+
+function verReglas(){
+  const d = document.getElementById('reglas');
+  if(d.showModal) d.showModal(); else d.setAttribute('open','');
+}
+
+/* =====================================================================
+   HALLAZGOS — el resumen de la expresión de intereses
+   ===================================================================== */
+function datosHallazgos(){
+  const filas = COMISIONES.map(k => {
+    const l = CONSEJERIAS.filter(c => intereses[clave(c.id, k.id)] !== undefined);
+    const probs = esFija(k) ? [] : problemasInteres(k);
+    return {
+      nombre: k.nombre,
+      cupo: k.min === k.max ? k.min + ' fijo' : k.min + '–' + k.max,
+      n: l.length,
+      ok: probs.length === 0,
+      estado: esFija(k) ? 'no cambia' : (probs.length ? probs.join(' · ') : 'en regla'),
+      personas: l.map(c => ({ nombre: c.nombre, presi: !!(intereses[clave(c.id, k.id)] || {}).p }))
+    };
+  });
+  return {
+    filas: filas,
+    enRegla: filas.filter(f => f.ok).length,
+    total: filas.length,
+    rebasan: CONSEJERIAS.filter(c => COMISIONES.filter(k => cuentaLimite(k) &&
+      intereses[clave(c.id, k.id)] !== undefined).length > MAX_POR_CONSEJERIA).map(c => c.nombre)
+  };
+}
+function imprimirHallazgos(){
+  const d0 = datosHallazgos();
+  const hoy = new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
+
+  const cuerpo = d0.filas.map(f =>
+    '<tr>' +
+      '<td class="com">' + f.nombre + '</td>' +
+      '<td class="cupo">' + f.n + ' / ' + f.cupo + '</td>' +
+      '<td class="' + (f.ok ? 'ok' : 'no') + '">' + f.estado + '</td>' +
+      '<td class="pers">' +
+        (f.personas.map(p => p.presi ? '<b>' + p.nombre + '</b> (presidencia)' : p.nombre).join(', ') || '—') +
+      '</td>' +
+    '</tr>').join('');
+
+  const doc =
+    '<!doctype html><html lang="es"><head><meta charset="utf-8">' +
+    '<title>Hallazgos — Expresión de intereses · ' + hoy + '</title><style>' +
+    '@page{size:letter portrait;margin:12mm}' +
+    '*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    'body{font-family:Arial,Helvetica,sans-serif;color:#222;margin:0;padding:18px}' +
+    'h1{font-size:15px;margin:0 0 2px}.sub{font-size:11px;color:#555;margin:0 0 10px}' +
+    '.resumen{font-size:11px;margin:0 0 12px;padding:8px 10px;background:#efeaf5;border-left:4px solid #4a2c6d}' +
+    'table{border-collapse:collapse;width:100%;font-size:10px}' +
+    'th,td{border:1px solid #cfcfd6;padding:5px 6px;text-align:left;vertical-align:top}' +
+    'thead th{background:#4a2c6d;color:#fff}' +
+    'tr{page-break-inside:avoid}' +
+    'td.com{font-weight:bold;width:26%}' +
+    'td.cupo{text-align:center;white-space:nowrap;width:9%}' +
+    'td.ok{color:#1b6b3a;width:20%}td.no{color:#a80063;font-weight:bold;width:20%}' +
+    '.pie{margin-top:12px;font-size:9px;color:#666}' +
+    '</style></head><body>' +
+    '<h1>Hallazgos — Expresión de intereses</h1>' +
+    '<p class="sub">Integración de Comisiones INE · Base: Acuerdo INE/CG241/2026 · Versión ' +
+      VERSION + ' · Generado el ' + hoy + '</p>' +
+    '<p class="resumen"><b>' + d0.enRegla + ' de ' + d0.total +
+      '</b> comisiones cumplirían todas las reglas con los intereses actuales' +
+      (d0.rebasan.length ? '.<br>Rebasan el límite de ' + MAX_POR_CONSEJERIA + ' permanentes: <b>' +
+        d0.rebasan.join(', ') + '</b>' : '') + '.</p>' +
+    '<table><thead><tr><th>Comisión</th><th>Interés / cupo</th><th>Estado</th>' +
+      '<th>Consejerías interesadas</th></tr></thead><tbody>' + cuerpo + '</tbody></table>' +
+    '<p class="pie">El número es cuántas consejerías quieren la comisión frente a su cupo; el tope de ' +
+    'integrantes sólo advierte, no invalida. La expresión de intereses es una capa aparte: no modifica ' +
+    'la integración real, la verificación ni el reporte.</p>' +
+    '</body></html>';
+
+  const w = window.open('', '_blank');
+  if(!w) return aviso('El navegador bloqueó la ventana; permita las ventanas emergentes.');
+  w.document.write(doc);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 350);
+}
+
+function verHallazgos(){
+  const d0 = datosHallazgos();
+  document.getElementById('cuerpoHallazgos').innerHTML =
+    '<p class="cfg-nota" style="margin-bottom:14px">' + d0.enRegla + ' de ' + d0.total +
+    ' comisiones cumplirían todas las reglas con los intereses actuales' +
+    (d0.rebasan.length ? '. Rebasan el límite de ' + MAX_POR_CONSEJERIA + ' permanentes: <b>' +
+      d0.rebasan.join(', ') + '</b>' : '') + '.</p>' +
+    d0.filas.map(f =>
+      '<div style="padding:11px 0;border-bottom:1px solid var(--linea)">' +
+        '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">' +
+          '<b style="font-size:13px">' + f.nombre + '</b>' +
+          '<span style="font-size:11.5px;white-space:nowrap;color:' + (f.ok ? 'var(--ok)' : 'var(--falta)') + '">' +
+            f.n + ' / ' + f.cupo + ' · ' + f.estado + '</span></div>' +
+        '<div style="font-size:12px;color:var(--tenue);margin-top:4px">' +
+          (f.personas.map(p => p.presi ? '<b>' + p.nombre + '</b> (presidencia)' : p.nombre).join(', ') || '—') +
+        '</div></div>').join('');
+  const d = document.getElementById('dlgHallazgos');
+  if(d.showModal) d.showModal(); else d.setAttribute('open','');
+}
+
+/* =====================================================================
+   REPORTE IMPRIMIBLE — ventana aparte lista para imprimir o guardar en PDF
+   ===================================================================== */
+function generarReporte(){
+  const cols = CONSEJERIAS;
+  const gran = {}; cols.forEach(c => gran[c.id] = 0);
+  let cuerpo = '';
+  ['permanente','temporal','otro'].forEach(g => {
+    const coms = COMISIONES.filter(k => k.grupo === g);
+    if(!coms.length) return;
+    const sub = {}; cols.forEach(c => sub[c.id] = 0);
+    cuerpo += '<tr class="grupo"><td class="com" colspan="' + (cols.length + 1) + '">' + GRUPOS[g].toUpperCase() + '</td></tr>';
+    coms.forEach(k => {
+      let fila = '<tr><td class="com">' + k.nombre + (k.bloqueada ? ' *' : '') + (k.noComputa ? ' †' : '') + '</td>';
+      cols.forEach(c => {
+        const puesta = marcas[clave(c.id, k.id)] !== undefined;
+        const presi  = puesta && presidenteActual(k) === c.id;
+        if(puesta && computa(k)){ sub[c.id]++; gran[c.id]++; }
+        fila += '<td class="' + (presi ? 'presi' : '') + '">' + (puesta ? 'X' : '') + '</td>';
+      });
+      cuerpo += fila + '</tr>';
+    });
+    cuerpo += '<tr class="total"><td class="com">Total: ' + GRUPOS[g] + '</td>' +
+              cols.map(c => '<td>' + sub[c.id] + '</td>').join('') + '</tr>';
+  });
+  cuerpo += '<tr class="grantotal"><td class="com">GRAN TOTAL</td>' +
+            cols.map(c => '<td>' + gran[c.id] + '</td>').join('') + '</tr>';
+
+  const doc = '<!doctype html><html lang="es"><head><meta charset="utf-8">' +
+    '<title>Integración de Comisiones INE — ' + VERSION_FECHA + '</title><style>' +
+    '@page{size:landscape;margin:12mm}*{box-sizing:border-box}' +
+    'body{font-family:Arial,Helvetica,sans-serif;color:#222;margin:0;padding:18px}' +
+    'h1{font-size:15px;margin:0 0 2px}.sub{font-size:11px;color:#555;margin:0 0 10px}' +
+    'table{border-collapse:collapse;width:100%;font-size:10px}' +
+    'th,td{border:1px solid #cfcfd6;padding:4px 5px;text-align:center}' +
+    'th.com,td.com{text-align:left;white-space:nowrap;font-weight:bold}' +
+    'thead th{background:#4a2c6d;color:#fff;vertical-align:bottom}' +
+    'tr.grupo td{background:#4a2c6d;color:#fff;text-align:left;font-weight:bold;letter-spacing:.5px}' +
+    'td.presi{background:#d5007f;color:#fff;font-weight:bold}' +
+    'tr.total td{background:#efeaf5;font-weight:bold}' +
+    'tr.grantotal td{background:#f9d9ec;color:#a80063;font-weight:bold}' +
+    '.pie{margin-top:10px;font-size:9px;color:#666}</style></head><body>' +
+    '<h1>Integración de Comisiones y Órganos del Consejo General — INE</h1>' +
+    '<p class="sub">Base: Acuerdo INE/CG241/2026 · Versión ' + VERSION + ' · ' + VERSION_FECHA + '</p>' +
+    '<table><thead><tr><th class="com">Comisión</th>' +
+      cols.map(c => '<th>' + c.nombre + '</th>').join('') + '</tr></thead><tbody>' + cuerpo + '</tbody></table>' +
+    '<p class="pie">* Integración bloqueada. ' +
+    (COMISIONES.some(k => k.noComputa) ? '† Comisión en decisión: se muestra pero no suma a los totales. ' : '') +
+    'Celda rosa = presidencia.</p></body></html>';
+
+  const w = window.open('', '_blank');
+  if(!w) return aviso('El navegador bloqueó la ventana; permite las ventanas emergentes.');
+  w.document.write(doc); w.document.close(); w.focus();
+  setTimeout(() => w.print(), 350);
+}
+
+/* ---------- Arranque ---------- */
+llenarPortada();
+intentarReanudar();
+</script>
+</body>
+</html>

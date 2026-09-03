@@ -205,5 +205,9 @@ app.post('/api/admin/login', (req, res) => {
    conexiones colgadas ante cualquier error de dedo o escaneo. */
 app.use('/api', (req, res) => res.status(404).json({ error: 'Recurso no encontrado.' }));
 
+/* Vista nueva (contenedores + ficha por consejería). Va ANTES del comodín:
+   si no, '/nueva' caería en él y devolvería la vista clásica. */
+app.get('/nueva', (req, res) => res.sendFile(path.join(__dirname, 'public', 'nueva.html')));
+
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.listen(PORT, () => console.log(`✅ Matriz de Comisiones en http://localhost:${PORT}`));

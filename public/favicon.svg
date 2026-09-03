@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="INE">
+  <!-- Icono de pestaña. Los logos disponibles son apaisados (120x37 y 198x82) y
+       a 16 px quedan ilegibles, así que se usan las siglas sobre el morado
+       institucional (#4a2c6d), con la barra magenta (#d5007f) del acento. -->
+  <rect width="64" height="64" rx="12" fill="#4a2c6d"/>
+  <text x="32" y="38" text-anchor="middle"
+        font-family="Segoe UI, system-ui, Helvetica, Arial, sans-serif"
+        font-size="26" font-weight="700" letter-spacing="1" fill="#ffffff">INE</text>
+  <rect x="16" y="45" width="32" height="4" rx="2" fill="#d5007f"/>
+</svg>

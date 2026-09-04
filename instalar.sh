@@ -22,9 +22,10 @@ CARPETA="${1:-}"
 PUERTO="${2:-}"
 RAMA="${3:-}"
 BASE_ORIGEN="${4:-}"
+VISTA="${5:-nueva}"          # pantalla de entrada: nueva | clasica
 
 uso(){
-  echo "Uso: ./instalar.sh <carpeta> <puerto> <rama> [base-a-copiar]"
+  echo "Uso: ./instalar.sh <carpeta> <puerto> <rama> [base-a-copiar] [vista]"
   echo "Ej.: ./instalar.sh comisiones-alterna 3016 vista-contenedores \\"
   echo "        /home/usuario/comisiones-web/comisiones.sqlite"
   exit 1
@@ -75,6 +76,8 @@ CLAVE="$(node -e "console.log(require('crypto').randomBytes(9).toString('base64u
 cat > .env <<CFG
 PORT=$PUERTO
 ADMIN_PASS=$CLAVE
+# Pantalla que responde en la raíz de esta instancia.
+$( [ "$VISTA" = "clasica" ] && echo "#VISTA=nueva" || echo "VISTA=nueva" )
 # Detrás de nginx, descomenta la línea siguiente para que el puerto deje de ser
 # alcanzable por IP y todo el tráfico entre cifrado por el proxy:
 #HOST=127.0.0.1
@@ -92,14 +95,15 @@ cat <<FIN
     Proceso PM2 : $CARPETA
     Puerto      : $PUERTO
     Rama        : $RAMA
+    Entrada     : $( [ "$VISTA" = "clasica" ] && echo "la pantalla de siempre" || echo "la vista de contenedores" )
     Clave admin : $CLAVE
 
   Guarda esa clave: está en .env y no vuelve a mostrarse.
 
   Comprueba que responde:
-      curl -s -o /dev/null -w '%{http_code}\\n' http://localhost:$PUERTO/nueva
+      curl -s -o /dev/null -w '%{http_code}\\n' http://localhost:$PUERTO/
 
   Para actualizarla de aquí en adelante:
-      cd $(pwd) && ./deploy.sh
+      cd $(pwd) && ./deploy-alterna.sh
 
 FIN

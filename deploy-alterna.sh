@@ -26,12 +26,20 @@ cd "$(dirname "$0")"
 
 command -v git >/dev/null || { echo "✖ git no está instalado"; exit 1; }
 command -v pm2 >/dev/null || { echo "✖ pm2 no está instalado"; exit 1; }
+command -v curl >/dev/null || { echo "✖ curl no está instalado"; exit 1; }
 
 # --- De qué instancia se trata ------------------------------------------------
 [ -f .env ] && { set -a; . ./.env; set +a; }
 APP_NAME="${APP_NAME:-$(basename "$(pwd)")}"
-PUERTO="${PORT:-3006}"
-BRANCH="$(git branch --show-current)"
+if [ -z "${PORT:-}" ]; then
+  echo "✖ No se pudo leer PORT del .env de esta instancia."
+  echo "   Sin él, la comprobación final apuntaría al puerto de la instancia"
+  echo "   en operación y daría por bueno un despliegue que quizá ni arrancó."
+  exit 1
+fi
+PUERTO="$PORT"
+# --show-current existe desde git 2.22; en servidores viejos se usa el respaldo.
+BRANCH="$(git branch --show-current 2>/dev/null || git rev-parse --abbrev-ref HEAD)"
 [ -n "$BRANCH" ] || { echo "✖ El repo no está en una rama, sino en un commit suelto."; exit 1; }
 
 echo "==> Instancia: $APP_NAME · rama: $BRANCH · puerto: $PUERTO"

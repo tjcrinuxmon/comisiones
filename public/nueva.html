@@ -55,6 +55,18 @@ body{font-family:system-ui,"Segoe UI",Roboto,sans-serif;background:var(--fondo);
 .separador{display:flex;align-items:center;gap:10px;margin:18px 0 14px;color:#c3c6cd;font-size:12px}
 .separador::before,.separador::after{content:"";flex-grow:1;height:1px;background:#eceaf0}
 
+/* Barra del modo intereses: sus acciones viven aquí y no en la barra
+   principal, que antes crecía dos botones al entrar y se partía en dos
+   renglones, moviendo todo lo demás de sitio. */
+.barra-modo{background:var(--ine-tinte);border-bottom:1px solid #e4e0ea;
+  padding:10px 32px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.barra-modo .que{font-size:13px;color:var(--ine);font-weight:600}
+.barra-modo .hint{font-size:12px;color:var(--tenue)}
+.barra-modo .der{margin-left:auto;display:flex;gap:8px}
+.barra-modo button{font:inherit;font-size:12.5px;padding:7px 14px;border-radius:6px;cursor:pointer;
+  border:1px solid #cfc6da;background:#fff;color:var(--ine)}
+.barra-modo button.primario{background:var(--ine);border-color:var(--ine);color:#fff}
+
 /* Aviso de la ventana de captura */
 .banda{padding:9px 32px;font-size:13px;display:flex;align-items:center;gap:10px}
 .banda.cerrada{background:#fdeae8;color:var(--excede)}
@@ -171,9 +183,36 @@ dialog::backdrop{background:rgba(23,23,26,.4)}
 .desde.excede{color:var(--excede);font-weight:600}
 .chip.preside .nom{color:var(--acento);font-weight:600}
 .chip .p{flex-shrink:0;font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px;background:#f0eef3;color:#c3c6cd;cursor:pointer}
+.chip .x:hover{color:var(--ine);background:#efeaf5}
 .chip.preside .p{background:var(--acento);color:#fff}
 .chip .x{flex-shrink:0;width:15px;text-align:center;color:#c3c6cd;font-size:13px;cursor:pointer;line-height:1}
-.vacia{flex-grow:1;display:flex;align-items:center;justify-content:center;font-size:11px;color:#c3c6cd;
+.vacia{flex-grow:1;display:flex;align-items:center;justify-content:center;font-size:11px;color:#c3c6cd;border:1px dashed #e4e2e9;border-radius:8px;min-height:50px}
+/* Suplencias: bloque aparte bajo los integrantes, para que no se confunda con
+   ellos. Un suplente no integra la comisión ni cuenta para el límite. */
+.prelacion{margin-top:10px;padding-top:9px;border-top:1px dashed #e4e2e9}
+.prel-tit{font-size:10.5px;font-weight:600;color:var(--tenue);margin-bottom:6px}
+.prel-tit em{font-style:normal;font-weight:400;color:#b4b7be}
+.prel-lista{display:flex;flex-direction:column;gap:3px;min-height:30px}
+.prelacion.sobre{background:#f6f1fb;border-radius:8px;outline:1.5px dashed var(--ine);outline-offset:2px}
+.supl{display:flex;align-items:center;gap:10px;padding:7px 8px 7px 7px;border-radius:6px;font-size:11.5px;cursor:grab}
+.supl:active{cursor:grabbing}
+.supl.arrastrando{opacity:.4}
+.supl.marca-arriba{box-shadow:inset 0 2px 0 var(--ine)}
+.supl:hover{background:#faf9fb}
+.supl .pos{flex-shrink:0;width:17px;font-weight:700;color:var(--ine);font-size:10.5px}
+/* La × va pegada al borde derecho y el nombre nunca la alcanza: un colchón
+   amplio, y la fila reserva su carril. Sin esto, con nombres largos el texto
+   terminaba junto al control y era fácil pulsarlo al querer arrastrar. */
+.supl .nom{flex-grow:1;min-width:0;color:#42464f;padding-right:26px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Blancos de clic decentes: una × de 15 px es difícil de atinar, sobre todo
+   en filas que además se arrastran. */
+.supl .x{flex-shrink:0;width:26px;height:26px;margin-left:6px;display:flex;align-items:center;justify-content:center;
+  border-radius:6px;color:#c3c6cd;cursor:pointer;font-size:15px;line-height:1}
+.supl .x:hover{color:var(--ine);background:#efeaf5}
+.prel-vacio{font-size:11px;color:#c3c6cd;padding:2px 5px}
+.prel-add{margin-top:6px;width:100%;font:inherit;font-size:11px;padding:4px 6px;
+  border:1px solid #e4e2e9;border-radius:6px;color:var(--tenue);background:#fff;cursor:pointer}
   border:1px dashed #e4e2e9;border-radius:8px;min-height:50px}
 
 /* ---- Vista de detalle ---- */
@@ -248,8 +287,6 @@ dialog::backdrop{background:rgba(23,23,26,.4)}
     <span class="captura" id="captura"></span>
     <span class="marcador" id="marcador">—</span>
     <button class="btn" id="btnModo"    onclick="alternarModo()" style="display:none">Expresar intereses</button>
-    <button class="btn" id="btnVolcar"  onclick="volcarIntereses()" style="display:none">Volcar → integración</button>
-    <button class="btn" id="btnLimpInt" onclick="limpiarIntereses()" style="display:none">Limpiar intereses</button>
     <button class="btn" onclick="verReglas()">Reglas generales</button>
     <button class="btn" id="btnHallazgos" onclick="verHallazgos()" style="display:none">Hallazgos</button>
     <button class="btn" id="btnReporte" onclick="generarReporte()" style="display:none">Reporte</button>
@@ -260,6 +297,7 @@ dialog::backdrop{background:rgba(23,23,26,.4)}
   </div>
 </div>
 
+<div id="barraModo"></div>
 <div id="banda"></div>
 <div id="cuerpo"></div>
 <div class="aviso" id="aviso"></div>
@@ -489,6 +527,7 @@ let ventana = { abierta:true, cierra:null, habilitado:true };
 
 let marcas = {};            // { "idC|idK": { f:ISO, p?:true } }  — igual que la vista clásica
 let intereses = {};         // { "idC|idK": { p?:true } }  presencia = interés como integrante
+let prelacion = {};         // { idComision: [idConsejeria, ...] } orden de suplencias
 let modo = 'integracion';   // 'integracion' | 'intereses'
 let ultimaVersion = -1;
 let vista = 'comisiones';   // 'comisiones' | 'detalle'
@@ -602,6 +641,96 @@ function cumple(k){
   return (esInt() ? problemasInteres(k) : problemas(k)).length === 0;
 }
 
+/* ---------------------------------------------------------------------
+   ORDEN DE PRELACIÓN DE SUPLENCIAS (Art. 44.2.c del Reglamento de Quejas y
+   Denuncias). Sólo en las comisiones con prelacion:true. Ser suplente NO
+   cuenta como integrar la comisión ni para el límite de permanentes, y una
+   consejería titular no puede figurar además como suplente.
+   --------------------------------------------------------------------- */
+const listaPrel = idK => prelacion[idK] || (prelacion[idK] = []);
+const esSuplente = (idC, idK) => listaPrel(idK).indexOf(idC) >= 0;
+
+function ponerSuplente(idK, idC){
+  if(!esAdmin()) return aviso('Las suplencias las ordena la administración.');
+  if(estaPuesta(idC, idK)) return aviso('Ya integra la comisión: no puede ser además suplente.');
+  const l = listaPrel(idK);
+  if(l.indexOf(idC) < 0) l.push(idC);
+  guardar(); pintar();
+}
+function quitarSuplente(idK, idC){
+  if(!esAdmin()) return;
+  const l = listaPrel(idK), i = l.indexOf(idC);
+  if(i >= 0) l.splice(i, 1);
+  guardar(); pintar();
+}
+/* Al integrar a alguien deja de poder ser suplente, y al revés. */
+function saneaPrelacion(){
+  Object.keys(prelacion).forEach(idK => {
+    prelacion[idK] = prelacion[idK].filter(idC => !estaPuesta(idC, idK));
+  });
+}
+
+/* Bloque de suplencias que se pinta bajo los integrantes. */
+/* Bloque de suplencias: una zona más donde se suelta, con el mismo gesto que
+   las comisiones. Se arrastra del banco para agregar, dentro de la lista para
+   reordenar, y fuera para quitar. Antes eran flechitas ↑↓, que obligaban a
+   varios clics para mover a alguien unos cuantos lugares. */
+function bloquePrelacion(k){
+  /* Se muestra en los DOS modos. La de siempre la escondía en intereses, pero
+     el orden de suplencias también se acuerda en esta etapa. Sólo la ordena la
+     administración: una consejería no ve ni edita la lista, porque implica a
+     terceros y ella sólo captura lo suyo. */
+  if(!k.prelacion) return '';
+  if(!esAdmin()) return '';
+  const l = listaPrel(k.id);
+  const libres = CONSEJERIAS.filter(c => !estaPuesta(c.id, k.id) && l.indexOf(c.id) < 0);
+  const filas = l.map((idC, n) => {
+    const c = CONSEJERIAS.find(x => x.id === idC);
+    if(!c) return '';
+    return '<div class="supl"' + (esAdmin() ? ' draggable="true"' : '') +
+      ' data-supl="' + idC + '" data-supk="' + k.id + '">' +
+      '<span class="pos">' + (n + 1) + 'º</span>' +
+      '<span class="nom">' + c.corto + '</span>' +
+      (esAdmin() ? '<span class="x" data-quitasup="' + idC + '" data-supk="' + k.id + '">×</span>' : '') +
+    '</div>';
+  }).join('');
+  return '<div class="prelacion" data-dropsup="' + k.id + '">' +
+    '<div class="prel-tit">Orden de prelación de suplencias<em> Art. 44.2.c RQD</em></div>' +
+    '<div class="prel-lista">' + (filas ||
+      '<div class="prel-vacio">' + (esAdmin() ? 'Arrastra aquí a quien supla' : 'Sin suplentes') + '</div>') +
+    '</div>' +
+    (esAdmin() && libres.length
+      ? '<select class="prel-add" data-addsup="' + k.id + '">' +
+          '<option value="">+ agregar suplente…</option>' +
+          libres.map(c => '<option value="' + c.id + '">' + c.corto + '</option>').join('') +
+        '</select>'
+      : '') +
+  '</div>';
+}
+
+/* Inserta en la posición que marca el cursor dentro de la lista. */
+function acomodarSuplente(idK, idC, antesDe){
+  if(!esAdmin()) return aviso('Las suplencias las ordena la administración.');
+  if(estaPuesta(idC, idK)) return aviso('Ya integra la comisión: no puede ser además suplente.');
+  const l = listaPrel(idK);
+  const i = l.indexOf(idC);
+  if(i >= 0) l.splice(i, 1);
+  const j = antesDe === null ? l.length : Math.max(0, l.indexOf(antesDe));
+  l.splice(antesDe === null ? l.length : j, 0, idC);
+  guardar(); pintar();
+}
+/* Qué fila está bajo el cursor, para saber dónde insertar. */
+function suplBajoCursor(zona, y){
+  const filas = [...zona.querySelectorAll('.supl')];
+  for(const f of filas){
+    const r = f.getBoundingClientRect();
+    if(y < r.top + r.height / 2) return f.dataset.supl;
+  }
+  return null;                       // por debajo de todas: va al final
+}
+
+
+
 function problemas(k){
   const l = integrantes(k), p = [];
   if(l.length < k.min) p.push('faltan ' + (k.min - l.length));
@@ -669,6 +798,7 @@ async function revisarConsejero(){
       ? 'Primer acceso: establece tu contraseña (mínimo 8 caracteres). Nadie más la conoce.'
       : '';
     btn.textContent = primerAcceso ? 'Crear contraseña y entrar' : 'Entrar';
+    c1.focus();
   }catch(e){ err('No se pudo conectar con el servidor.'); }
 }
 
@@ -711,6 +841,17 @@ async function entrarAdmin(){
     await iniciar();
   }catch(e){ err('No se pudo conectar con el servidor.'); }
 }
+
+/* Enter envía el formulario que estés usando. Se perdió al rehacer la portada
+   con los dos accesos: el manejador anterior apuntaba a un campo que dejó de
+   existir. Va delegado para no depender del orden de carga. */
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Enter') return;
+  const t = e.target;
+  if(!t || t.tagName !== 'INPUT') return;
+  if(t.id === 'claveAdmin'){ e.preventDefault(); return entrarAdmin(); }
+  if(t.id === 'claveCons' || t.id === 'claveCons2'){ e.preventDefault(); return accederConsejero(); }
+});
 
 function salir(){
   rol = null; adminPass = ''; miConsejero = null; miToken = ''; ultimaVersion = -1;
@@ -852,6 +993,14 @@ async function cargarEstado(){
   marcas = j.marcas || {};
   /* El servidor ya filtra: una consejería sólo recibe SUS intereses. */
   intereses = j.intereses || {};
+  /* Si el servidor no trae orden de suplencias —o viene vacío— se siembra el
+     del Acuerdo INE/CG241/2026. Sin esto, el primer guardado escribiría una
+     lista vacía encima de la vigente. */
+  prelacion = j.prelacion || {};
+  COMISIONES.filter(k => k.prelacion).forEach(k => {
+    if(!prelacion[k.id] || !prelacion[k.id].length)
+      prelacion[k.id] = (PRELACION_VIGENTE[k.id] || []).filter(idC => !estaPuesta(idC, k.id));
+  });
   ultimaVersion = j.version || 0;
   if(j.config) ventana = j.config;
   pintarBanda();
@@ -875,7 +1024,7 @@ async function guardar(){
     const r = await fetch(API + '/admin', {
       method:'POST',
       headers:{ 'Content-Type':'application/json', 'X-Admin': adminPass },
-      body: JSON.stringify({ marcas: marcas })
+      body: JSON.stringify({ marcas: marcas, prelacion: prelacion })
     });
     const j = await r.json();
     if(j.version) ultimaVersion = j.version;
@@ -899,6 +1048,7 @@ function poner(idC, idK){
      queda marcado como «sobra N», igual que en el sistema anterior. */
   const sobrará = integrantes(k).length + 1 > k.max;
   marcas[clave(idC, idK)] = { f: new Date().toISOString() };
+  saneaPrelacion();                       // un titular no puede ser además suplente
   if(sobrará) aviso(k.nombre + ' queda con ' + integrantes(k).length + ' integrantes y su máximo es ' + k.max + '.');
   const n = permDe(idC);
   if(cuentaLimite(k) && n > MAX_POR_CONSEJERIA){
@@ -995,6 +1145,7 @@ async function volcarIntereses(){
     });
   });
   marcas = nuevas;
+  prelacion = JSON.parse(JSON.stringify(PRELACION_VIGENTE));   // y el orden de suplencias
   await guardar();
   modo = 'integracion';
   pintar();
@@ -1073,10 +1224,21 @@ function pintar(){
   document.body.classList.toggle('modo-intereses', esInt());
   if(esAdmin()){
     document.getElementById('btnModo').textContent = esInt() ? 'Ver integración' : 'Expresar intereses';
-    document.getElementById('btnVolcar').style.display    = esInt() ? '' : 'none';
-    document.getElementById('btnLimpInt').style.display   = esInt() ? '' : 'none';
     document.getElementById('btnHallazgos').style.display = '';
+    document.getElementById('btnReporte').textContent =
+      esInt() ? 'Imprimir intereses' : 'Imprimir integración';
   }
+  /* Acciones propias del modo, en su propia barra */
+  const bm = document.getElementById('barraModo');
+  bm.innerHTML = (esInt() && esAdmin())
+    ? '<div class="barra-modo"><span class="que">Expresión de intereses</span>' +
+      '<span class="hint">Lo que marcan las consejerías. El volcado a la integración lo hace la administración.</span>' +
+      '<span class="der">' +
+        '<button onclick="limpiarIntereses()">Limpiar intereses</button>' +
+        '<button class="primario" onclick="volcarIntereses()">Volcar → integración</button>' +
+      '</span></div>'
+    : '';
+
   document.getElementById('subtitulo').textContent =
     vista === 'detalle'  ? 'Ficha de la consejería · toca una comisión para integrarla o quitarla'
     : esInt() && esAdmin() ? 'Intereses expresados por las consejerías · el volcado es acción de administración'
@@ -1157,7 +1319,8 @@ function vistaComisiones(){
             (k.min === k.max ? k.min : k.min + '–' + k.max) + '</span></div>' +
         edo +
         '<div class="gente">' + (chips ||
-          '<div class="vacia">' + (fija ? 'Sin integrantes' : 'Arrastra aquí') + '</div>') + '</div></div>';
+          '<div class="vacia">' + (fija ? 'Sin integrantes' : 'Arrastra aquí') + '</div>') + '</div>' +
+        bloquePrelacion(k) + '</div>';
     }).join('');
   });
 
@@ -1243,8 +1406,9 @@ function vistaDetalle(){
 
 /* ---------- Interacción (delegada, porque el HTML se regenera) ---------- */
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-p],[data-x],[data-sel],[data-tog],#volver');
+  const t = e.target.closest('[data-p],[data-x],[data-sel],[data-tog],[data-quitasup],#volver');
   if(!t) return;
+  if(t.dataset.quitasup  !== undefined) return quitarSuplente(t.dataset.supk, t.dataset.quitasup);
   if(t.id === 'volver'){ vista = 'comisiones'; return pintar(); }
   if(t.dataset.x !== undefined){ e.stopPropagation();
     return esInt() ? alternarInteres(t.dataset.x, t.dataset.xk) : quitar(t.dataset.x, t.dataset.xk); }
@@ -1272,13 +1436,31 @@ document.addEventListener('click', e => {
 let cajaSobre = null;
 
 function limpiarArrastre(){
+  document.querySelectorAll('[data-dropsup].sobre').forEach(n => n.classList.remove('sobre'));
+  document.querySelectorAll('.marca-arriba').forEach(n => n.classList.remove('marca-arriba'));
   document.querySelectorAll('.arrastrando').forEach(n => n.classList.remove('arrastrando'));
   if(cajaSobre){ cajaSobre.classList.remove('sobre'); cajaSobre = null; }
   const b = document.getElementById('banco');
   if(b) b.classList.remove('soltar');
 }
 
+document.addEventListener('change', e => {
+  const s = e.target.closest('[data-addsup]');
+  if(!s || !s.value) return;
+  const idK = s.dataset.addsup, idC = s.value;
+  s.value = '';
+  ponerSuplente(idK, idC);
+});
+
 document.addEventListener('dragstart', e => {
+  const sup = e.target.closest('.supl[data-supl]');
+  if(sup){
+    if(!esAdmin()){ e.preventDefault(); return; }
+    drag = { id: sup.dataset.supl, origen: 'suplencia', k: sup.dataset.supk };
+    try{ e.dataTransfer.setData('text/plain', drag.id); e.dataTransfer.effectAllowed = 'move'; }catch(err){}
+    sup.classList.add('arrastrando');
+    return;
+  }
   const chip  = e.target.closest('.chip[data-c]');
   const ficha = e.target.closest('#banco .ficha');
   const nodo  = chip || ficha;
@@ -1301,6 +1483,17 @@ document.addEventListener('dragend', () => { limpiarArrastre(); drag = null; sob
 
 document.addEventListener('dragover', e => {
   if(!drag) return;
+  const zona = e.target.closest('[data-dropsup]');
+  if(zona){
+    e.preventDefault();
+    document.querySelectorAll('.marca-arriba').forEach(n => n.classList.remove('marca-arriba'));
+    zona.classList.add('sobre');
+    const antes = suplBajoCursor(zona, e.clientY);
+    if(antes){ const f = zona.querySelector('.supl[data-supl="' + antes + '"]'); if(f) f.classList.add('marca-arriba'); }
+    return;
+  }
+  document.querySelectorAll('[data-dropsup].sobre').forEach(n => n.classList.remove('sobre'));
+  document.querySelectorAll('.marca-arriba').forEach(n => n.classList.remove('marca-arriba'));
   const caja  = e.target.closest('[data-drop]');
   const banco = e.target.closest('#banco');
   if(!caja && !banco) return;
@@ -1318,6 +1511,15 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('drop', e => {
+  const zona = e.target.closest('[data-dropsup]');
+  if(zona){
+    e.preventDefault();
+    zona.classList.remove('sobre');
+    if(!drag) return;
+    const d = drag; drag = null;
+    limpiarArrastre();
+    return acomodarSuplente(zona.dataset.dropsup, d.id, suplBajoCursor(zona, e.clientY));
+  }
   const caja = e.target.closest('[data-drop]');
   const banco = e.target.closest('#banco');
   if(!caja && !banco) return;
@@ -1327,6 +1529,10 @@ document.addEventListener('drop', e => {
   const destino = caja ? caja.dataset.drop : 'banco';
   const d = drag; drag = null; sobre = null;
   if(d.origen === destino) return pintar();
+  if(d.origen === 'suplencia'){
+    if(destino === 'banco') return quitarSuplente(d.k, d.id);
+    return poner(d.id, destino);            // de suplente a titular
+  }
   if(esInt()){
     if(d.origen !== 'banco') alternarInteres(d.id, d.origen);
     if(destino !== 'banco')  alternarInteres(d.id, destino);
@@ -1465,7 +1671,11 @@ function verHallazgos(){
 /* =====================================================================
    REPORTE IMPRIMIBLE — ventana aparte lista para imprimir o guardar en PDF
    ===================================================================== */
+/* Imprime lo que estás viendo: la integración o los intereses expresados.
+   Antes leía siempre `marcas`, así que en modo intereses imprimía la
+   integración y no había forma de sacar en papel lo capturado. */
 function generarReporte(){
+  const int = esInt();
   const cols = CONSEJERIAS;
   const gran = {}; cols.forEach(c => gran[c.id] = 0);
   let cuerpo = '';
@@ -1477,8 +1687,10 @@ function generarReporte(){
     coms.forEach(k => {
       let fila = '<tr><td class="com">' + k.nombre + (k.bloqueada ? ' *' : '') + (k.noComputa ? ' †' : '') + '</td>';
       cols.forEach(c => {
-        const puesta = marcas[clave(c.id, k.id)] !== undefined;
-        const presi  = puesta && presidenteActual(k) === c.id;
+        const puesta = fuente()[clave(c.id, k.id)] !== undefined;
+        /* En intereses la presidencia son PROPUESTAS y puede haber varias,
+           así que se marca a cada quien la propuso, no a una sola. */
+        const presi  = puesta && (int ? preside(c.id, k.id) : presidenteActual(k) === c.id);
         if(puesta && computa(k)){ sub[c.id]++; gran[c.id]++; }
         fila += '<td class="' + (presi ? 'presi' : '') + '">' + (puesta ? 'X' : '') + '</td>';
       });
@@ -1491,8 +1703,13 @@ function generarReporte(){
             cols.map(c => '<td>' + gran[c.id] + '</td>').join('') + '</tr>';
 
   const doc = '<!doctype html><html lang="es"><head><meta charset="utf-8">' +
-    '<title>Integración de Comisiones INE — ' + VERSION_FECHA + '</title><style>' +
-    '@page{size:landscape;margin:12mm}*{box-sizing:border-box}' +
+    '<title>' + (int ? 'Expresión de intereses' : 'Integración de Comisiones') +
+      ' INE — ' + VERSION_FECHA + '</title><style>' +
+    '@page{size:landscape;margin:12mm}' +
+    /* Sin esto el navegador descarta los fondos al imprimir: los encabezados
+       morados salen en gris y las celdas de presidencia pierden su rosa,
+       dejando una X blanca sobre blanco, ilegible. */
+    '*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
     'body{font-family:Arial,Helvetica,sans-serif;color:#222;margin:0;padding:18px}' +
     'h1{font-size:15px;margin:0 0 2px}.sub{font-size:11px;color:#555;margin:0 0 10px}' +
     'table{border-collapse:collapse;width:100%;font-size:10px}' +
@@ -1500,15 +1717,18 @@ function generarReporte(){
     'th.com,td.com{text-align:left;white-space:nowrap;font-weight:bold}' +
     'thead th{background:#4a2c6d;color:#fff;vertical-align:bottom}' +
     'tr.grupo td{background:#4a2c6d;color:#fff;text-align:left;font-weight:bold;letter-spacing:.5px}' +
-    'td.presi{background:#d5007f;color:#fff;font-weight:bold}' +
+    'td.presi{background:#d5007f;color:#fff;font-weight:bold;outline:1.5px solid #a80063;outline-offset:-1.5px}' +
     'tr.total td{background:#efeaf5;font-weight:bold}' +
     'tr.grantotal td{background:#f9d9ec;color:#a80063;font-weight:bold}' +
     '.pie{margin-top:10px;font-size:9px;color:#666}</style></head><body>' +
-    '<h1>Integración de Comisiones y Órganos del Consejo General — INE</h1>' +
+    '<h1>' + (int ? 'Expresión de intereses — Comisiones y Órganos del Consejo General'
+                  : 'Integración de Comisiones y Órganos del Consejo General') + ' · INE</h1>' +
     '<p class="sub">Base: Acuerdo INE/CG241/2026 · Versión ' + VERSION + ' · ' + VERSION_FECHA + '</p>' +
     '<table><thead><tr><th class="com">Comisión</th>' +
       cols.map(c => '<th>' + c.nombre + '</th>').join('') + '</tr></thead><tbody>' + cuerpo + '</tbody></table>' +
-    '<p class="pie">* Integración bloqueada. ' +
+    '<p class="pie">' + (int
+      ? 'X = interés expresado · celda rosa = se propone a la presidencia (pueden ser varias por comisión). '
+      : '') + '* Integración bloqueada. ' +
     (COMISIONES.some(k => k.noComputa) ? '† Comisión en decisión: se muestra pero no suma a los totales. ' : '') +
     'Celda rosa = presidencia.</p></body></html>';
 

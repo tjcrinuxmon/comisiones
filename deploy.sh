@@ -15,6 +15,18 @@ BRANCH="master"
 
 cd "$(dirname "$0")"
 
+# Este guion tiene FIJOS el proceso "comisiones" y la rama master, así que
+# corrido desde otra carpeta reiniciaría la instancia en operación e intentaría
+# traerle master a una instancia que sigue otra rama. Como las instancias
+# alternas clonan el repo completo, ambos guiones quedan uno junto al otro y el
+# error es fácil de cometer; de ahí la comprobación.
+if [ "$(basename "$(pwd)")" != "comisiones-web" ]; then
+  echo "✖ Éste es el despliegue de la instancia en operación (proceso"
+  echo "  '$APP_NAME', rama $BRANCH), y estás en $(pwd)."
+  echo "  Para una instancia alterna usa:  ./deploy-alterna.sh"
+  exit 1
+fi
+
 command -v git >/dev/null || { echo "✖ git no está instalado"; exit 1; }
 command -v pm2 >/dev/null || { echo "✖ pm2 no está instalado"; exit 1; }
 

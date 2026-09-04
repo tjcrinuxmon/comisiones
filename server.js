@@ -22,6 +22,12 @@ const {
 
 const app  = express();
 const PORT = process.env.PORT || 3006;
+/* Interfaz en la que escucha. Detrás de nginx conviene HOST=127.0.0.1 en el
+   .env: así el puerto deja de ser alcanzable por IP y todo el tráfico entra
+   cifrado por el proxy. Se configura por entorno y NO editando este archivo:
+   modificarlo en el servidor rompe el `git merge --ff-only` de deploy.sh y deja
+   la instancia sin poder actualizarse. */
+const HOST = process.env.HOST || '0.0.0.0';
 const ADMIN_PASS = process.env.ADMIN_PASS || 'cambia-esta-clave';
 
 app.use(cors());
@@ -206,4 +212,6 @@ app.post('/api/admin/login', (req, res) => {
 app.use('/api', (req, res) => res.status(404).json({ error: 'Recurso no encontrado.' }));
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.listen(PORT, () => console.log(`✅ Matriz de Comisiones en http://localhost:${PORT}`));
+app.listen(PORT, HOST, () => console.log(
+  `✅ Matriz de Comisiones en http://localhost:${PORT}` +
+  (HOST === '127.0.0.1' ? ' (sólo local; el acceso público entra por nginx)' : '')));

@@ -381,7 +381,14 @@ body.rol-consejero tbody tr[data-consejeria]:not(.fila-yo){display:none}
 body.rol-consejero tfoot{display:none}
 /* Ventana cerrada: el consejero ve su fila en SOLO LECTURA (sin editar). */
 body.ventana-cerrada.rol-consejero tr.fila-yo td.celda{cursor:not-allowed}
-body.ventana-cerrada.rol-consejero td.celda .presi{display:none}
+/* Se retira el OFRECIMIENTO de proponer presidencia, pero lo ya propuesto se
+   sigue viendo: es lo que capturó el propio consejero y ocultarlo lo dejaba sin
+   poder consultarlo, sin ninguna explicación en pantalla. Queda visible y sin
+   responder al clic. */
+body.ventana-cerrada.rol-consejero td.celda .presi.disponible{display:none}
+body.ventana-cerrada.rol-consejero td.celda .presi.puesta{
+  cursor:default;pointer-events:none;opacity:.8;
+}
 /* Banner de disponibilidad */
 .banner-ventana{margin:12px 0;padding:11px 16px;border-radius:8px;font-size:14px;line-height:1.4}
 .banner-ventana.abierta{background:#eef7ee;border:1px solid #cfe6cf;color:#2f6b34}

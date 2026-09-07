@@ -1702,6 +1702,29 @@ function generarReporte(){
   cuerpo += '<tr class="grantotal"><td class="com">GRAN TOTAL</td>' +
             cols.map(c => '<td>' + gran[c.id] + '</td>').join('') + '</tr>';
 
+  /* Orden de prelación de suplencias (Art. 44.2.c RQD). Va como tabla aparte
+     bajo la matriz, no dentro de ella: ser suplente no es integrar la comisión
+     y mezclarlo con las marcas daría a entender lo contrario. Sólo en modo
+     integración: en intereses todavía no hay suplencias designadas. */
+  let prelHTML = '';
+  if(!int){
+    COMISIONES.filter(k => k.prelacion && (prelacion[k.id] || []).length).forEach(k => {
+      const filas = prelacion[k.id].map((idC, n) => {
+        const c = CONSEJERIAS.find(x => x.id === idC);
+        return '<tr><td class="num">' + (n + 1) + '</td><td class="nom">' +
+               (c ? c.nombre : idC) + '</td></tr>';
+      }).join('');
+      prelHTML +=
+        '<div class="prel-bloque">' +
+          '<h2 class="prel-titulo">Orden de prelación de suplencias — ' + k.nombre +
+            ' <span class="art">Art. 44, num. 2, inc. c) RQD</span></h2>' +
+          '<table class="prel-tabla"><thead><tr><th class="num">#</th>' +
+            '<th class="nom">Nombre de la persona integrante suplente</th></tr></thead>' +
+          '<tbody>' + filas + '</tbody></table>' +
+        '</div>';
+    });
+  }
+
   const doc = '<!doctype html><html lang="es"><head><meta charset="utf-8">' +
     '<title>' + (int ? 'Expresión de intereses' : 'Integración de Comisiones') +
       ' INE — ' + VERSION_FECHA + '</title><style>' +
@@ -1720,15 +1743,23 @@ function generarReporte(){
     'td.presi{background:#d5007f;color:#fff;font-weight:bold;outline:1.5px solid #a80063;outline-offset:-1.5px}' +
     'tr.total td{background:#efeaf5;font-weight:bold}' +
     'tr.grantotal td{background:#f9d9ec;color:#a80063;font-weight:bold}' +
+    '.prel-bloque{margin-top:16px;page-break-inside:avoid}' +
+    '.prel-titulo{font-size:12px;margin:0 0 5px;color:#4a2c6d}' +
+    '.prel-titulo .art{font-size:9px;color:#888;font-weight:normal}' +
+    '.prel-tabla{width:auto;min-width:360px}' +
+    '.prel-tabla th{text-align:left}' +
+    '.prel-tabla th.num,.prel-tabla td.num{width:34px;text-align:center;font-weight:bold}' +
+    '.prel-tabla td.nom{text-align:left}' +
     '.pie{margin-top:10px;font-size:9px;color:#666}</style></head><body>' +
     '<h1>' + (int ? 'Expresión de intereses — Comisiones y Órganos del Consejo General'
                   : 'Integración de Comisiones y Órganos del Consejo General') + ' · INE</h1>' +
     '<p class="sub">Base: Acuerdo INE/CG241/2026 · Versión ' + VERSION + ' · ' + VERSION_FECHA + '</p>' +
     '<table><thead><tr><th class="com">Comisión</th>' +
       cols.map(c => '<th>' + c.nombre + '</th>').join('') + '</tr></thead><tbody>' + cuerpo + '</tbody></table>' +
+    prelHTML +
     '<p class="pie">' + (int
       ? 'X = interés expresado · celda rosa = se propone a la presidencia (pueden ser varias por comisión). '
-      : '') + '* Integración bloqueada. ' +
+      : '') + '* Integración bloqueada. ' + (prelHTML ? 'Ser suplente no cuenta como integrar la comisión ni para el límite de permanentes. ' : '') +
     (COMISIONES.some(k => k.noComputa) ? '† Comisión en decisión: se muestra pero no suma a los totales. ' : '') +
     'Celda rosa = presidencia.</p></body></html>';
 

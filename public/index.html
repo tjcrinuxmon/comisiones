@@ -2179,9 +2179,11 @@ function fmtFechaHora(iso){
   if(isNaN(d)) return iso;
   return d.toLocaleString('es-MX', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit', hour12:false });
 }
+/* Sin la fecha de cierre: a la consejería le basta saber que ya no puede
+   capturar y a quién dirigirse. El momento exacto en que se cerró lo sigue
+   viendo la administración en su propio banner. */
 function mensajeCierre(){
-  return 'La captura está cerrada' + (ventana.cierra ? ' (cerró el ' + fmtFechaHora(ventana.cierra) + ')' : '') +
-    '. Para cambios, contacta a la Secretaría Ejecutiva.';
+  return 'La captura está cerrada. Para cambios, contacta a la Secretaría Ejecutiva.';
 }
 /* Banner + modo solo-lectura según la ventana. El admin nunca se bloquea. */
 function aplicarVentana(){

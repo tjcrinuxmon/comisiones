@@ -2194,10 +2194,13 @@ function aplicarVentana(){
   if(esAdminRol()){
     b.style.display = '';
     b.className = 'banner-ventana ' + (cerrada ? 'cerrada' : 'abierta');
+    /* Tampoco aquí va la fecha en que cerró: se pidió que no se vea en pantalla.
+       El administrador la sigue teniendo a la mano en “Disponibilidad”, que es
+       donde se ajusta. Se dejó sólo la indicación de qué hacer. */
     b.innerHTML = cerrada
       ? '<b>Captura CERRADA para consejerías.</b> ' +
-        (ventana.habilitado ? ('Cerró el ' + fmtFechaHora(ventana.cierra) + '.') : 'El sistema está deshabilitado.') +
-        ' Tú (administrador) puedes seguir editando. Usa “Disponibilidad” para reabrir.'
+        (ventana.habilitado ? '' : 'El sistema está deshabilitado. ') +
+        'Usa “Disponibilidad” para reabrir.'
       : '<b>Captura ABIERTA para consejerías.</b> ' +
         (ventana.cierra ? ('Cierra el ' + fmtFechaHora(ventana.cierra) + '.') : 'Sin fecha de cierre.') +
         ' Ajusta en “Disponibilidad”.';

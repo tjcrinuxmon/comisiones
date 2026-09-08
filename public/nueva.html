@@ -1704,26 +1704,27 @@ function generarReporte(){
 
   /* Orden de prelación de suplencias (Art. 44.2.c RQD). Va como tabla aparte
      bajo la matriz, no dentro de ella: ser suplente no es integrar la comisión
-     y mezclarlo con las marcas daría a entender lo contrario. Sólo en modo
-     integración: en intereses todavía no hay suplencias designadas. */
+     y mezclarlo con las marcas daría a entender lo contrario.
+
+     Se imprime en los DOS modos, igual que el bloque de la tarjeta: el orden de
+     suplencias también se acuerda en la etapa de intereses, así que excluirlo
+     del reporte de intereses dejaba fuera algo que sí está capturado. */
   let prelHTML = '';
-  if(!int){
-    COMISIONES.filter(k => k.prelacion && (prelacion[k.id] || []).length).forEach(k => {
-      const filas = prelacion[k.id].map((idC, n) => {
-        const c = CONSEJERIAS.find(x => x.id === idC);
-        return '<tr><td class="num">' + (n + 1) + '</td><td class="nom">' +
-               (c ? c.nombre : idC) + '</td></tr>';
-      }).join('');
-      prelHTML +=
-        '<div class="prel-bloque">' +
-          '<h2 class="prel-titulo">Orden de prelación de suplencias — ' + k.nombre +
-            ' <span class="art">Art. 44, num. 2, inc. c) RQD</span></h2>' +
-          '<table class="prel-tabla"><thead><tr><th class="num">#</th>' +
-            '<th class="nom">Nombre de la persona integrante suplente</th></tr></thead>' +
-          '<tbody>' + filas + '</tbody></table>' +
-        '</div>';
-    });
-  }
+  COMISIONES.filter(k => k.prelacion && (prelacion[k.id] || []).length).forEach(k => {
+    const filas = prelacion[k.id].map((idC, n) => {
+      const c = CONSEJERIAS.find(x => x.id === idC);
+      return '<tr><td class="num">' + (n + 1) + '</td><td class="nom">' +
+             (c ? c.nombre : idC) + '</td></tr>';
+    }).join('');
+    prelHTML +=
+      '<div class="prel-bloque">' +
+        '<h2 class="prel-titulo">Orden de prelación de suplencias — ' + k.nombre +
+          ' <span class="art">Art. 44, num. 2, inc. c) RQD</span></h2>' +
+        '<table class="prel-tabla"><thead><tr><th class="num">#</th>' +
+          '<th class="nom">Nombre de la persona integrante suplente</th></tr></thead>' +
+        '<tbody>' + filas + '</tbody></table>' +
+      '</div>';
+  });
 
   const doc = '<!doctype html><html lang="es"><head><meta charset="utf-8">' +
     '<title>' + (int ? 'Expresión de intereses' : 'Integración de Comisiones') +
@@ -1757,11 +1758,17 @@ function generarReporte(){
     '<table><thead><tr><th class="com">Comisión</th>' +
       cols.map(c => '<th>' + c.nombre + '</th>').join('') + '</tr></thead><tbody>' + cuerpo + '</tbody></table>' +
     prelHTML +
+    /* La leyenda de la celda rosa va UNA vez y según el modo. Antes se añadía
+       "Celda rosa = presidencia." al final en los dos, así que el reporte de
+       intereses se contradecía: arriba decía que la propuesta puede ser de
+       varias consejerías y abajo la daba por presidencia designada. */
     '<p class="pie">' + (int
       ? 'X = interés expresado · celda rosa = se propone a la presidencia (pueden ser varias por comisión). '
-      : '') + '* Integración bloqueada. ' + (prelHTML ? 'Ser suplente no cuenta como integrar la comisión ni para el límite de permanentes. ' : '') +
+      : 'X = integrante · celda rosa = presidencia. ') +
+    '* Integración bloqueada. ' +
+    (prelHTML ? 'Ser suplente no cuenta como integrar la comisión ni para el límite de permanentes. ' : '') +
     (COMISIONES.some(k => k.noComputa) ? '† Comisión en decisión: se muestra pero no suma a los totales. ' : '') +
-    'Celda rosa = presidencia.</p></body></html>';
+    '</p></body></html>';
 
   const w = window.open('', '_blank');
   if(!w) return aviso('El navegador bloqueó la ventana; permite las ventanas emergentes.');

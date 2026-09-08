@@ -1689,8 +1689,15 @@ function generarReporte(){
       cols.forEach(c => {
         const puesta = fuente()[clave(c.id, k.id)] !== undefined;
         /* En intereses la presidencia son PROPUESTAS y puede haber varias,
-           así que se marca a cada quien la propuso, no a una sola. */
-        const presi  = puesta && (int ? preside(c.id, k.id) : presidenteActual(k) === c.id);
+           así que se marca a cada quien la propuso, no a una sola.
+
+           El Comité Editorial no tiene marca propia: la hereda de quien presida
+           Capacitación Electoral (autoPresi). Hay que mirar la comisión base,
+           igual que hace presideEnPantalla; leer la marca del Comité daba
+           siempre falso y el reporte salía sin presidencia. */
+        const presi  = puesta && (k.autoPresi
+          ? preside(c.id, k.autoPresi)
+          : (int ? preside(c.id, k.id) : presidenteActual(k) === c.id));
         if(puesta && computa(k)){ sub[c.id]++; gran[c.id]++; }
         fila += '<td class="' + (presi ? 'presi' : '') + '">' + (puesta ? 'X' : '') + '</td>';
       });

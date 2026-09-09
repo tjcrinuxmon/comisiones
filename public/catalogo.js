@@ -68,32 +68,58 @@ const CONSEJERIAS = [
   { id:'montano',  nombre:'Jorge Montaño Ventura',        cargo:'Consejero Electoral',  sexo:'H', corto:'Jorge Montaño' }
 ];
 
+/* `nombre` es el nombre oficial y es el que va en los reportes y en los avisos.
+   `corto` es sólo para el encabezado de la matriz, donde la columna mide 88 px
+   y un nombre largo se parte en muchos renglones y estira la cabecera. Al pasar
+   el cursor por la columna sigue apareciendo el nombre completo.
+
+   `corto` NO entra en la huella del catálogo (ver huellasActuales: hashea
+   id~nombre~min~max~nota), así que ajustarlo no rompe el sello. */
 const COMISIONES = [
   /* --- Permanentes (LGIPE art. 42.2 — diez comisiones) --- */
-  { id:'organizacion',  nombre:'Organización Electoral',                    min:3, max:5, grupo:'permanente' },
-  { id:'fiscalizacion', nombre:'Fiscalización',                             min:5, max:5, grupo:'permanente',
+  { id:'organizacion',  nombre:'Organización Electoral',                    corto:'Organización Electoral',
+                        min:3, max:5, grupo:'permanente' },
+  { id:'fiscalizacion', nombre:'Fiscalización',                             corto:'Fiscalización',
+                        min:5, max:5, grupo:'permanente',
                         refrendoPresidencia:true },
-  { id:'capacitacion',  nombre:'Capacitación Electoral y Educación Cívica', min:3, max:5, grupo:'permanente' },
-  { id:'prerrogativas', nombre:'Prerrogativas y Partidos Políticos / Radio y TV', min:3, max:5, grupo:'permanente' },
-  { id:'registro',      nombre:'Registro Federal de Electores',             min:3, max:5, grupo:'permanente' },
-  { id:'igualdad',      nombre:'Igualdad de Género y no Discriminación',    min:3, max:5, grupo:'permanente' },
-  { id:'quejas',        nombre:'Quejas y Denuncias',                        min:3, max:3, grupo:'permanente', prelacion:true },
-  { id:'ople',          nombre:'Vinculación con OPLE',                      min:4, max:4, grupo:'permanente' },
-  { id:'servicio',      nombre:'Servicio Profesional Electoral Nacional',   min:3, max:5, grupo:'permanente',
+  { id:'capacitacion',  nombre:'Capacitación Electoral y Educación Cívica', corto:'Capacitación y Educación Cívica',
+                        min:3, max:5, grupo:'permanente' },
+  { id:'prerrogativas', nombre:'Prerrogativas y Partidos Políticos / Radio y TV', corto:'Prerrogativas · Radio y TV',
+                        min:3, max:5, grupo:'permanente' },
+  { id:'registro',      nombre:'Registro Federal de Electores',             corto:'Registro Federal',
+                        min:3, max:5, grupo:'permanente' },
+  { id:'igualdad',      nombre:'Igualdad de Género y no Discriminación',    corto:'Igualdad de Género',
+                        min:3, max:5, grupo:'permanente' },
+  { id:'quejas',        nombre:'Quejas y Denuncias',                        corto:'Quejas y Denuncias',
+                        min:3, max:3, grupo:'permanente', prelacion:true },
+  { id:'ople',          nombre:'Vinculación con OPLE',                      corto:'Vinculación con OPLE',
+                        min:4, max:4, grupo:'permanente' },
+  { id:'servicio',      nombre:'Servicio Profesional Electoral Nacional',   corto:'Servicio Profesional',
+                        min:3, max:5, grupo:'permanente',
                         refrendoPresidencia:true },
-  { id:'verificacion',  nombre:'Verificación de Integridad en Candidaturas',min:3, max:3, grupo:'permanente',
+  { id:'verificacion',  nombre:'Verificación de Integridad en Candidaturas',corto:'Verificación de Integridad',
+                        min:3, max:3, grupo:'permanente',
                         comparacion:'no-comparable', bloqueada:true, nota:'INTEGRADA 30/07/2026 · ya no elegible' },
   /* --- Temporales (presididas siempre por una consejería; 3 a 5) --- */
-  { id:'capyorg',       nombre:'Capacitación y Organización Electoral',     min:3, max:5, grupo:'temporal',
+  { id:'capyorg',       nombre:'Capacitación y Organización Electoral',     corto:'Capacitación y Organización',
+                        min:3, max:5, grupo:'temporal',
                         comparacion:'no-comparable' },
-  { id:'transparencia', nombre:'Transparencia, Acceso a la Información y Protección de Datos Personales', min:3, max:5, grupo:'temporal' },
-  { id:'seguimiento',   nombre:'Seguimiento de los Procesos Electorales Locales 2025-2026', min:3, max:5, grupo:'temporal',
+  { id:'transparencia', nombre:'Transparencia, Acceso a la Información y Protección de Datos Personales',
+                        corto:'Transparencia y Datos Personales',
+                        min:3, max:5, grupo:'temporal' },
+  { id:'seguimiento',   nombre:'Seguimiento de los Procesos Electorales Locales 2025-2026',
+                        corto:'Seguimiento PEL 2025-2026',
+                        min:3, max:5, grupo:'temporal',
                         bloqueada:true, comparacion:'excepcion' },
-  { id:'voto',          nombre:'Voto de las y los Mexicanos Residentes en el Extranjero', min:3, max:5, grupo:'temporal' },
-  { id:'presupuesto',   nombre:'Presupuesto 2027',                          min:3, max:5, grupo:'temporal',
+  { id:'voto',          nombre:'Voto de las y los Mexicanos Residentes en el Extranjero',
+                        corto:'Voto en el Extranjero',
+                        min:3, max:5, grupo:'temporal' },
+  { id:'presupuesto',   nombre:'Presupuesto 2027',                          corto:'Presupuesto 2027',
+                        min:3, max:5, grupo:'temporal',
                         bloqueada:true, comparacion:'excepcion' },
   /* --- Otros órganos --- */
-  { id:'editorial',     nombre:'Comité Editorial',                          min:2, max:2, grupo:'otro',
+  { id:'editorial',     nombre:'Comité Editorial',                          corto:'Comité Editorial',
+                        min:2, max:2, grupo:'otro',
                         comparacion:'no-comparable', autoPresi:'capacitacion' }
 ];
 

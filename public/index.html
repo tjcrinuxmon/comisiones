@@ -66,20 +66,25 @@ body{
 .marco{overflow:auto;max-height:calc(100vh - 132px);background:var(--papel)}
 table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%}
 
+/* La cabecera se mantiene compacta a propósito: se queda fija arriba y cada
+   renglón que gane se lo quita a la matriz, que es lo que se está leyendo. Por
+   eso el relleno y los márgenes de aquí son cortos y el interlineado, justo.
+   Los tamaños de letra NO se tocaron: apretar el espacio no debe costar
+   legibilidad. */
 thead th{
   position:sticky;top:0;z-index:3;background:var(--encabezado);color:#fff;
-  font-size:11.5px;line-height:1.25;font-weight:600;text-align:center;
-  padding:10px 8px;vertical-align:bottom;border-right:1px solid rgba(255,255,255,.22);
+  font-size:11.5px;line-height:1.18;font-weight:600;text-align:center;
+  padding:6px 8px;vertical-align:bottom;border-right:1px solid rgba(255,255,255,.22);
 }
 /* Columnas angostas: el nombre de la comisión se acomoda en varios renglones
    en lugar de estirar la matriz a lo ancho. */
 thead th.col-com{
   width:88px;min-width:88px;max-width:88px;
-  padding:10px 6px;font-size:11px;
+  padding:6px 6px;font-size:11px;
   white-space:normal;overflow-wrap:break-word;hyphens:auto;
 }
-thead th .regla{display:block;margin-top:5px;font-family:var(--mono);font-size:10.5px;color:#c9ccd4;font-weight:400}
-thead th .nueva{display:block;margin-top:3px;font-size:9.5px;color:#f5c76b;letter-spacing:.3px}
+thead th .regla{display:block;margin-top:3px;font-family:var(--mono);font-size:10.5px;color:#c9ccd4;font-weight:400}
+thead th .nueva{display:block;margin-top:2px;font-size:9.5px;line-height:1.12;color:#f5c76b;letter-spacing:.3px}
 
 /* La esquina superior izquierda es a la vez encabezado de columna y de fila.
    Necesita más peso que la regla .persona, que si no le impone fondo blanco
@@ -88,15 +93,15 @@ thead th.esquina{
   position:sticky;left:0;top:0;z-index:6;
   background:var(--encabezado);color:#fff;
   text-align:left;vertical-align:bottom;white-space:nowrap;
-  padding:10px 14px;font-size:12.5px;
+  padding:6px 14px;font-size:12.5px;
   border-right:1px solid rgba(255,255,255,.35);
 }
 /* Columna final "Total comisiones": un encabezado de grupo sobre dos
    subcolumnas (permanentes | temporales y otros órganos). Son conteos: no
    muestran máximos ni mínimos. */
-th.total-col{width:62px;min-width:62px;max-width:62px;padding:8px 4px}
+th.total-col{width:62px;min-width:62px;max-width:62px;padding:6px 4px}
 thead th.total-grupo{
-  position:sticky;top:0;z-index:4;padding:6px 6px;
+  position:sticky;top:0;z-index:4;padding:4px 6px;
   font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#fff;
   background:#4a4550;border-bottom:2px solid rgba(255,255,255,.25);
   white-space:normal;
@@ -197,14 +202,17 @@ tfoot .sello{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px
 
 /* Encabezado de grupo (Permanentes · Temporales · Otros órganos) */
 thead th.grupo{
-  position:sticky;top:0;z-index:4;padding:6px 8px;
+  position:sticky;top:0;z-index:4;padding:4px 8px;
   font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#fff;
   border-bottom:2px solid rgba(255,255,255,.25);
 }
 thead th.grupo.grupo-permanente{background:#3d4350}
 thead th.grupo.grupo-temporal{background:#2f5d63}
 thead th.grupo.grupo-otro{background:#5a4a6a}
-thead th.col-com{top:37px}                                   /* queda debajo del renglón de grupo */
+/* Valor de arranque: sólo se usa en el primer pintado, porque alinearCabecera()
+   mide el renglón de grupo y lo reemplaza por su altura real. Bajó de 37 a 33
+   junto con el relleno del renglón de grupo. */
+thead th.col-com{top:33px}                                   /* queda debajo del renglón de grupo */
 thead th.col-com.grupo-temporal{box-shadow:inset 0 -3px 0 #2f5d63}
 thead th.col-com.grupo-otro{box-shadow:inset 0 -3px 0 #5a4a6a}
 
@@ -775,32 +783,58 @@ const CONSEJERIAS = [
   { id:'montano',  nombre:'Jorge Montaño Ventura',        cargo:'Consejero Electoral',  sexo:'H', corto:'Jorge Montaño' }
 ];
 
+/* `nombre` es el nombre oficial y es el que va en los reportes y en los avisos.
+   `corto` es sólo para el encabezado de la matriz, donde la columna mide 88 px
+   y un nombre largo se parte en muchos renglones y estira la cabecera. Al pasar
+   el cursor por la columna sigue apareciendo el nombre completo.
+
+   `corto` NO entra en la huella del catálogo (ver huellasActuales: hashea
+   id~nombre~min~max~nota), así que ajustarlo no rompe el sello. */
 const COMISIONES = [
   /* --- Permanentes (LGIPE art. 42.2 — diez comisiones) --- */
-  { id:'organizacion',  nombre:'Organización Electoral',                    min:3, max:5, grupo:'permanente' },
-  { id:'fiscalizacion', nombre:'Fiscalización',                             min:5, max:5, grupo:'permanente',
+  { id:'organizacion',  nombre:'Organización Electoral',                    corto:'Organización Electoral',
+                        min:3, max:5, grupo:'permanente' },
+  { id:'fiscalizacion', nombre:'Fiscalización',                             corto:'Fiscalización',
+                        min:5, max:5, grupo:'permanente',
                         refrendoPresidencia:true },
-  { id:'capacitacion',  nombre:'Capacitación Electoral y Educación Cívica', min:3, max:5, grupo:'permanente' },
-  { id:'prerrogativas', nombre:'Prerrogativas y Partidos Políticos / Radio y TV', min:3, max:5, grupo:'permanente' },
-  { id:'registro',      nombre:'Registro Federal de Electores',             min:3, max:5, grupo:'permanente' },
-  { id:'igualdad',      nombre:'Igualdad de Género y no Discriminación',    min:3, max:5, grupo:'permanente' },
-  { id:'quejas',        nombre:'Quejas y Denuncias',                        min:3, max:3, grupo:'permanente', prelacion:true },
-  { id:'ople',          nombre:'Vinculación con OPLE',                      min:4, max:4, grupo:'permanente' },
-  { id:'servicio',      nombre:'Servicio Profesional Electoral Nacional',   min:3, max:5, grupo:'permanente',
+  { id:'capacitacion',  nombre:'Capacitación Electoral y Educación Cívica', corto:'Capacitación y Educación Cívica',
+                        min:3, max:5, grupo:'permanente' },
+  { id:'prerrogativas', nombre:'Prerrogativas y Partidos Políticos / Radio y TV', corto:'Prerrogativas · Radio y TV',
+                        min:3, max:5, grupo:'permanente' },
+  { id:'registro',      nombre:'Registro Federal de Electores',             corto:'Registro Federal',
+                        min:3, max:5, grupo:'permanente' },
+  { id:'igualdad',      nombre:'Igualdad de Género y no Discriminación',    corto:'Igualdad de Género',
+                        min:3, max:5, grupo:'permanente' },
+  { id:'quejas',        nombre:'Quejas y Denuncias',                        corto:'Quejas y Denuncias',
+                        min:3, max:3, grupo:'permanente', prelacion:true },
+  { id:'ople',          nombre:'Vinculación con OPLE',                      corto:'Vinculación con OPLE',
+                        min:4, max:4, grupo:'permanente' },
+  { id:'servicio',      nombre:'Servicio Profesional Electoral Nacional',   corto:'Servicio Profesional',
+                        min:3, max:5, grupo:'permanente',
                         refrendoPresidencia:true },
-  { id:'verificacion',  nombre:'Verificación de Integridad en Candidaturas',min:3, max:3, grupo:'permanente',
+  { id:'verificacion',  nombre:'Verificación de Integridad en Candidaturas',corto:'Verificación de Integridad',
+                        min:3, max:3, grupo:'permanente',
                         comparacion:'no-comparable', bloqueada:true, nota:'INTEGRADA 30/07/2026 · ya no elegible' },
   /* --- Temporales (presididas siempre por una consejería; 3 a 5) --- */
-  { id:'capyorg',       nombre:'Capacitación y Organización Electoral',     min:3, max:5, grupo:'temporal',
+  { id:'capyorg',       nombre:'Capacitación y Organización Electoral',     corto:'Capacitación y Organización',
+                        min:3, max:5, grupo:'temporal',
                         comparacion:'no-comparable' },
-  { id:'transparencia', nombre:'Transparencia, Acceso a la Información y Protección de Datos Personales', min:3, max:5, grupo:'temporal' },
-  { id:'seguimiento',   nombre:'Seguimiento de los Procesos Electorales Locales 2025-2026', min:3, max:5, grupo:'temporal',
+  { id:'transparencia', nombre:'Transparencia, Acceso a la Información y Protección de Datos Personales',
+                        corto:'Transparencia y Datos Personales',
+                        min:3, max:5, grupo:'temporal' },
+  { id:'seguimiento',   nombre:'Seguimiento de los Procesos Electorales Locales 2025-2026',
+                        corto:'Seguimiento PEL 2025-2026',
+                        min:3, max:5, grupo:'temporal',
                         bloqueada:true, comparacion:'excepcion', noComputa:true },
-  { id:'voto',          nombre:'Voto de las y los Mexicanos Residentes en el Extranjero', min:3, max:5, grupo:'temporal' },
-  { id:'presupuesto',   nombre:'Presupuesto 2027',                          min:3, max:5, grupo:'temporal',
+  { id:'voto',          nombre:'Voto de las y los Mexicanos Residentes en el Extranjero',
+                        corto:'Voto en el Extranjero',
+                        min:3, max:5, grupo:'temporal' },
+  { id:'presupuesto',   nombre:'Presupuesto 2027',                          corto:'Presupuesto 2027',
+                        min:3, max:5, grupo:'temporal',
                         bloqueada:true, comparacion:'excepcion' },
   /* --- Otros órganos --- */
-  { id:'editorial',     nombre:'Comité Editorial',                          min:2, max:2, grupo:'otro',
+  { id:'editorial',     nombre:'Comité Editorial',                          corto:'Comité Editorial',
+                        min:2, max:2, grupo:'otro',
                         comparacion:'no-comparable', autoPresi:'capacitacion' }
 ];
 
@@ -1522,14 +1556,25 @@ function construir(){
     i > 0 && COMISIONES[i-1].grupo !== k.grupo).map(k => k.id));
   const div = k => divisores.has(k.id) ? ' divisor' : '';
 
+  /* En pantalla va el nombre corto; el completo queda en el title, a un paso
+     del cursor, y es el que sigue saliendo en los reportes. */
   const encabezados = COMISIONES.map(k =>
-    '<th class="col-com grupo-' + k.grupo + div(k) + '">' + k.nombre +
+    '<th class="col-com grupo-' + k.grupo + div(k) + '" title="' + k.nombre + '">' +
+      (k.corto || k.nombre) +
       '<span class="regla">' + reglaTexto(k) + '</span>' +
-      (k.bloqueada ? '<span class="nueva">integración bloqueada</span>' : '') +
-      (k.autoPresi ? '<span class="nueva">preside quien presida Capacitación</span>' : '') +
-      (k.refrendoPresidencia ? '<span class="nueva">presidencia refrendable · sin rotación</span>' : '') +
-      (k.noComputa ? '<span class="nueva">en decisión · no suma a los totales</span>' : '') +
-      (k.nota ? '<span class="nueva">' + k.nota + '</span>' : '') +
+      /* Si la integración está bloqueada, ése es el único aviso que va: no se
+         puede tocar la columna y el resto de las leyendas —la fecha en que se
+         integró, el «no suma a los totales»— sólo alargan la cabecera sin
+         cambiar nada de lo que se puede hacer ahí. Aplica a Verificación de
+         Integridad, Seguimiento PEL y Presupuesto 2027.
+         Ojo: se oculta la leyenda, no la regla. Seguimiento sigue sin sumar a
+         los totales aunque ya no lo anuncie en la columna. */
+      (k.bloqueada
+        ? '<span class="nueva">integración bloqueada</span>'
+        : (k.autoPresi ? '<span class="nueva">preside quien presida Capacitación</span>' : '') +
+          (k.refrendoPresidencia ? '<span class="nueva">presidencia refrendable · sin rotación</span>' : '') +
+          (k.noComputa ? '<span class="nueva">en decisión · no suma a los totales</span>' : '') +
+          (k.nota ? '<span class="nueva">' + k.nota + '</span>' : '')) +
     '</th>').join('');
 
   /* Encabezado de grupo: tramos contiguos del mismo grupo en el catálogo. */

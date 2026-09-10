@@ -504,8 +504,8 @@ body.ventana-cerrada.rol-consejero td.celda .presi.puesta{
       <p>El sistema compara cada integración modificable con el Acuerdo INE/CG241/2026.
       En cada comisión debe pulsarse su <b>botón de verificación</b> (en el pie de la columna)
       antes de continuar; sólo cuando todas están verificadas puede concluirse la integración.
-      En las dos comisiones temporales inmutables (Presupuesto 2027 y Seguimiento PEL 2025-2026)
-      únicamente se <b>confirma</b> la integración.</p>
+      En la comisión temporal inmutable (Presupuesto 2027) únicamente se
+      <b>confirma</b> la integración.</p>
     </div>
 
     <div class="regla">
@@ -571,11 +571,8 @@ body.ventana-cerrada.rol-consejero td.celda .presi.puesta{
       <ul>
         <li>Las comisiones temporales siempre son presididas por una Consejera o Consejero Electoral
         y se integran con un mínimo de 3 y un máximo de 5 consejerías, bajo el principio de paridad.</li>
-        <li>La Comisión de Presupuesto 2027 y la de Seguimiento de los Procesos Electorales Locales
-        2025-2026 conservan su <b>integración bloqueada</b>: no se editan en la matriz.</li>
-        <li>La Comisión de Seguimiento de los Procesos Electorales Locales 2025-2026 está
-        <b>en decisión</b> (continúa o se extingue): se muestra y conserva su integración, pero
-        <b>no se suma</b> a los totales de comisiones temporales ni al gran total.</li>
+        <li>La Comisión de Presupuesto 2027 conserva su <b>integración bloqueada</b>:
+        no se edita en la matriz.</li>
         <li>El <b>Comité Editorial</b> se integra con 2 personas, bajo paridad, y lo preside
         automáticamente quien presida la Comisión de Capacitación Electoral y Educación Cívica;
         esa persona debe además estar <b>integrada</b> al Comité (no puede presidir sin integrarlo).</li>
@@ -822,10 +819,11 @@ const COMISIONES = [
   { id:'transparencia', nombre:'Transparencia, Acceso a la Información y Protección de Datos Personales',
                         corto:'Transparencia y Datos Personales',
                         min:3, max:5, grupo:'temporal' },
-  { id:'seguimiento',   nombre:'Seguimiento de los Procesos Electorales Locales 2025-2026',
-                        corto:'Seguimiento PEL 2025-2026',
-                        min:3, max:5, grupo:'temporal',
-                        bloqueada:true, comparacion:'excepcion', noComputa:true },
+  /* Seguimiento de los Procesos Electorales Locales 2025-2026 se retiró del
+     catálogo el 09/09/2026: ya no se quiere ver. Al quitarla de aquí desaparece
+     de la matriz, de los reportes y de todos los conteos —las temporales pasan
+     de cinco a cuatro—, sin dejar leyendas que explicar.
+     Su integración sigue en el historial de git por si hubiera que reponerla. */
   { id:'voto',          nombre:'Voto de las y los Mexicanos Residentes en el Extranjero',
                         corto:'Voto en el Extranjero',
                         min:3, max:5, grupo:'temporal' },
@@ -844,14 +842,14 @@ const COMISIONES = [
    valores de abajo, que corresponden al archivo original. Si alguien
    edita el catálogo, el sello del encabezado lo delata.
    ===================================================================== */
-const VERSION       = '1.7';
-const VERSION_FECHA = '29/07/2026';
+const VERSION       = '1.8';
+const VERSION_FECHA = '09/09/2026';
 
 const HUELLAS_ORIGINALES = {
   tope:        '300CA0D02DAFAC62',   // 25/08/2026: el límite pasó de 4 a 5 (antes 310CA263B39B76CD)
   consejerias: '748C6D2AB1698C74',
-  comisiones:  '622B51DBF962ADA5',
-  vigente:     '1512ECDD113B5BC3',
+  comisiones:  '2DD03C4C1D1259F6',   // 09/09/2026: salió Seguimiento PEL (antes 622B51DBF962ADA5)
+  vigente:     'B20B6FAF2EBA0875',   // 09/09/2026: integración de esa fecha (antes 1512ECDD113B5BC3)
   historial:   '830645BE6DAECBD8'
 };
 
@@ -952,93 +950,95 @@ function verIntegridad(){
    real (ver mesesDesde) y se resalta en ámbar u rojo bajo cada celda.
    ===================================================================== */
 
-/* Permanentes: miembros y presidencias conforme a INE/CG241/2026 (las fechas
-   reflejan la racha continua de cada consejería; se afinan aparte para la
-   antigüedad). Temporales y Comité Editorial: integración aprobada en los
-   puntos PRIMERO y SEGUNDO del Acuerdo INE/CG241/2026 (27/04/2026).
-   La presidencia del Comité Editorial no se marca aquí: la hereda de quien
-   presida Capacitación Electoral (Espadas), ver autoPresi. */
+/* ACTUALIZADO EL 09/09/2026 con la integración acordada en esa fecha. Sustituye
+   a la que venía del Acuerdo INE/CG241/2026 (27/04/2026).
+
+   Las fechas son las de cada asignación: las que traen 2020-07-30, 2023-09-08 o
+   2026-04-27 vienen de acuerdos anteriores y marcan la racha continua de esa
+   consejería en esa comisión —de ahí se calcula la antigüedad frente al límite
+   legal de 3 años—; las de 2026-09-09 son las que se movieron ese día.
+
+   La presidencia del Comité Editorial NO se marca aquí: la hereda de quien
+   presida Capacitación Electoral —hoy Faz—, ver autoPresi.
+
+   Ya no aparece Seguimiento PEL 2025-2026: se retiró del catálogo ese mismo día
+   y sus cinco asignaciones se quitaron de aquí. Dejarlas habría sembrado marcas
+   de una comisión que ya no existe. */
 const INTEGRACION_VIGENTE = {
   castillo: [
+    { comision:'fiscalizacion', fecha:'2026-09-09' },
     { comision:'prerrogativas', fecha:'2023-09-08' },
-    { comision:'registro',      fecha:'2023-09-08' },
     { comision:'igualdad',      fecha:'2023-09-08' },
-    { comision:'quejas',        fecha:'2023-09-08', presidencia:true },
-    { comision:'transparencia', fecha:'2026-04-27', presidencia:true }
+    { comision:'voto',          fecha:'2026-09-09' }
   ],
   chavez: [
     { comision:'organizacion',  fecha:'2026-04-27' },
-    { comision:'fiscalizacion', fecha:'2026-04-27' },
-    { comision:'capacitacion',  fecha:'2026-04-27' },
-    { comision:'prerrogativas', fecha:'2026-04-27' },
-    { comision:'presupuesto',   fecha:'2026-04-27' },
-    { comision:'verificacion',  fecha:'2026-07-30', presidencia:true }
+    { comision:'prerrogativas', fecha:'2026-04-27', presidencia:true },
+    { comision:'quejas',        fecha:'2026-09-09' },
+    { comision:'verificacion',  fecha:'2026-07-30', presidencia:true },
+    { comision:'capyorg',       fecha:'2026-09-09' },
+    { comision:'transparencia', fecha:'2026-09-09' },
+    { comision:'presupuesto',   fecha:'2026-04-27' }
   ],
   cruzg: [
-    { comision:'organizacion',  fecha:'2026-04-27' },
-    { comision:'registro',      fecha:'2026-04-27' },
+    { comision:'organizacion',  fecha:'2026-04-27', presidencia:true },
+    { comision:'fiscalizacion', fecha:'2026-09-09' },
+    { comision:'registro',      fecha:'2026-04-27', presidencia:true },
     { comision:'ople',          fecha:'2026-04-27' },
-    { comision:'seguimiento',   fecha:'2026-04-27' },
-    { comision:'transparencia', fecha:'2026-04-27' }
+    { comision:'voto',          fecha:'2026-09-09' }
   ],
   delacruz: [
-    { comision:'capacitacion',  fecha:'2023-09-08' },
-    { comision:'prerrogativas', fecha:'2023-09-08', presidencia:true },
-    { comision:'registro',      fecha:'2023-09-08' },
-    { comision:'ople',          fecha:'2020-07-30' },
-    { comision:'seguimiento',   fecha:'2026-04-27' },
-    { comision:'voto',          fecha:'2026-04-27' },
+    { comision:'capacitacion',  fecha:'2026-09-09' },
+    { comision:'prerrogativas', fecha:'2023-09-08' },
+    { comision:'registro',      fecha:'2026-09-09' },
+    { comision:'verificacion',  fecha:'2026-07-30' },
+    { comision:'capyorg',       fecha:'2026-09-09', presidencia:true },
     { comision:'transparencia', fecha:'2026-04-27' },
     { comision:'presupuesto',   fecha:'2026-04-27' },
-    { comision:'editorial',     fecha:'2026-04-27' },
-    { comision:'verificacion',  fecha:'2026-07-30' }
+    { comision:'editorial',     fecha:'2026-04-27' }
   ],
   espadas: [
-    { comision:'fiscalizacion', fecha:'2020-07-30', presidencia:true },
-    { comision:'capacitacion',  fecha:'2023-09-08', presidencia:true },
-    { comision:'prerrogativas', fecha:'2020-07-30' },
-    { comision:'servicio',      fecha:'2023-09-08' },
-    { comision:'voto',          fecha:'2026-04-27' },
-    { comision:'presupuesto',   fecha:'2026-04-27' },
-    { comision:'editorial',     fecha:'2026-04-27' },
-    { comision:'verificacion',  fecha:'2026-07-30' }
-  ],
-  faz: [
-    { comision:'organizacion',  fecha:'2023-09-08', presidencia:true },
-    { comision:'ople',          fecha:'2020-07-30' },
-    { comision:'servicio',      fecha:'2023-09-08', presidencia:true },
-    { comision:'transparencia', fecha:'2026-04-27' }
-  ],
-  gomez: [
-    { comision:'fiscalizacion', fecha:'2026-04-27' },
-    { comision:'capacitacion',  fecha:'2026-04-27' },
-    { comision:'igualdad',      fecha:'2026-04-27' },
-    { comision:'quejas',        fecha:'2026-04-27' },
-    { comision:'voto',          fecha:'2026-04-27' }
-  ],
-  humphrey: [
     { comision:'fiscalizacion', fecha:'2020-07-30' },
     { comision:'capacitacion',  fecha:'2023-09-08' },
-    { comision:'prerrogativas', fecha:'2023-09-08' },
-    { comision:'registro',      fecha:'2020-07-30', presidencia:true },
-    { comision:'seguimiento',   fecha:'2026-04-27', presidencia:true },
-    { comision:'voto',          fecha:'2026-04-27' }
+    { comision:'ople',          fecha:'2026-09-09', presidencia:true },
+    { comision:'verificacion',  fecha:'2026-07-30' },
+    { comision:'capyorg',       fecha:'2026-09-09' },
+    { comision:'voto',          fecha:'2026-04-27' },
+    { comision:'presupuesto',   fecha:'2026-04-27' }
+  ],
+  faz: [
+    { comision:'capacitacion',  fecha:'2026-09-09', presidencia:true },
+    { comision:'registro',      fecha:'2026-09-09' },
+    { comision:'servicio',      fecha:'2023-09-08' },
+    { comision:'capyorg',       fecha:'2026-09-09' },
+    { comision:'editorial',     fecha:'2026-09-09' }
+  ],
+  gomez: [
+    { comision:'registro',      fecha:'2026-09-09' },
+    { comision:'igualdad',      fecha:'2026-04-27' },
+    { comision:'quejas',        fecha:'2026-04-27', presidencia:true },
+    { comision:'voto',          fecha:'2026-04-27', presidencia:true }
+  ],
+  humphrey: [
+    { comision:'organizacion',  fecha:'2026-09-09' },
+    { comision:'fiscalizacion', fecha:'2020-07-30' },
+    { comision:'igualdad',      fecha:'2026-09-09', presidencia:true },
+    { comision:'capyorg',       fecha:'2026-09-09' }
   ],
   lopezv: [
-    { comision:'igualdad',      fecha:'2023-09-08', presidencia:true },
-    { comision:'quejas',        fecha:'2023-09-08' },
-    { comision:'servicio',      fecha:'2023-09-08' },
-    { comision:'seguimiento',   fecha:'2026-04-27' },
+    { comision:'registro',      fecha:'2026-09-09' },
+    { comision:'ople',          fecha:'2026-09-09' },
+    { comision:'servicio',      fecha:'2023-09-08', presidencia:true },
     { comision:'transparencia', fecha:'2026-04-27' },
+    { comision:'voto',          fecha:'2026-09-09' },
     { comision:'presupuesto',   fecha:'2026-04-27' }
   ],
   montano: [
-    { comision:'fiscalizacion', fecha:'2023-09-08' },
-    { comision:'registro',      fecha:'2023-09-08' },
-    { comision:'igualdad',      fecha:'2023-09-08' },
-    { comision:'ople',          fecha:'2023-09-08', presidencia:true },
-    { comision:'seguimiento',   fecha:'2026-04-27' },
-    { comision:'voto',          fecha:'2026-04-27', presidencia:true },
+    { comision:'fiscalizacion', fecha:'2023-09-08', presidencia:true },
+    { comision:'quejas',        fecha:'2026-09-09' },
+    { comision:'ople',          fecha:'2023-09-08' },
+    { comision:'servicio',      fecha:'2026-09-09' },
+    { comision:'transparencia', fecha:'2026-09-09', presidencia:true },
     { comision:'presupuesto',   fecha:'2026-04-27', presidencia:true }
   ]
 };
@@ -1201,13 +1201,13 @@ function sembrarBloqueadas(){
 }
 
 /* Comisiones que por ahora NO cambian: en "intenciones" se precargan con su
-   integración vigente (Seguimiento PEL y Presupuesto —bloqueadas— y el Comité
-   Editorial). Si una no está cargada en intereses, se siembra desde la
-   integración vigente (miembros y, si la hay, la presidencia). */
+   integración vigente (Presupuesto y Verificación —bloqueadas—). Si una no está
+   cargada en intereses, se siembra desde la integración vigente (miembros y, si
+   la hay, la presidencia). */
 /* Fijas = comisiones que NO cambian (bloqueadas, no editables). El Comité
    Editorial NO es fija: se puede elegir/cambiar; su presidencia es automática
    (quien presida Capacitación) y el segundo lugar es libre. */
-const INTERES_FIJAS = ['seguimiento', 'presupuesto', 'verificacion'];
+const INTERES_FIJAS = ['presupuesto', 'verificacion'];
 const esFija = k => INTERES_FIJAS.includes(k.id);
 function cargarInteresesFijas(){
   INTERES_FIJAS.forEach(idK => {
@@ -1325,7 +1325,9 @@ const clave    = (c,k) => c + '|' + k;
 const marcaDe    = (c,k) => marcas[clave(c,k)];
 const estaPuesta = (c,k) => marcaDe(c,k) !== undefined;
 /* Comisiones en decisión (noComputa): se muestran y conservan su integración,
-   pero no suman en ningún total. Hoy: Seguimiento PEL 2025-2026. */
+   pero no suman en ningún total. Hoy ninguna lo usa: lo tuvo Seguimiento PEL,
+   que salió del catálogo el 09/09/2026. Se conserva porque el caso —una comisión
+   que continúa o se extingue— vuelve a presentarse. */
 const computa       = k => !k.noComputa;
 const porConsejeria = c => COMISIONES.filter(k => computa(k) && estaPuesta(c.id, k.id)).length;
 const porComision   = k => CONSEJERIAS.filter(c => estaPuesta(c.id, k.id)).length;
@@ -1566,9 +1568,10 @@ function construir(){
          puede tocar la columna y el resto de las leyendas —la fecha en que se
          integró, el «no suma a los totales»— sólo alargan la cabecera sin
          cambiar nada de lo que se puede hacer ahí. Aplica a Verificación de
-         Integridad, Seguimiento PEL y Presupuesto 2027.
-         Ojo: se oculta la leyenda, no la regla. Seguimiento sigue sin sumar a
-         los totales aunque ya no lo anuncie en la columna. */
+         Integridad y a Presupuesto 2027.
+         Ojo: oculta la leyenda, no la regla. Hoy ninguna comisión usa
+         noComputa, pero si alguna vuelve a usarlo y está bloqueada, seguirá
+         sin sumar aunque no lo anuncie en la columna. */
       (k.bloqueada
         ? '<span class="nueva">integración bloqueada</span>'
         : (k.autoPresi ? '<span class="nueva">preside quien presida Capacitación</span>' : '') +
@@ -2153,7 +2156,7 @@ function alternarPresidencia(idC, idK){
 function verificar(idK){
   const k = COMISIONES.find(x => x.id === idK);
 
-  if(!esModificable(k)){                          // Presupuesto 2027 y Seguimiento PEL
+  if(!esModificable(k)){                          // Presupuesto 2027 y Verificación de Integridad
     verificadas[k.id] = firmaComision(k);
     guardar(); pintar();
     return mostrarAviso(k.nombre + ': integración confirmada.');
@@ -2316,10 +2319,10 @@ function alternarModo(){
 }
 
 /* Borra sólo la expresión de intereses (no toca la integración real). Conserva
-   precargadas las comisiones que no cambian (Seguimiento, Presupuesto, Comité). */
+   precargadas las comisiones que no cambian (ver INTERES_FIJAS). */
 function limpiarIntereses(){
-  if(!confirm('Se borrarán las expresiones de interés (se conservan precargadas Seguimiento, ' +
-              'Presupuesto y Comité Editorial). La integración real no se toca. ¿Continuar?')) return;
+  if(!confirm('Se borrarán las expresiones de interés (se conservan precargadas ' +
+              'Presupuesto 2027 y Verificación de Integridad). La integración real no se toca. ¿Continuar?')) return;
   intereses = {};
   cargarInteresesFijas();
   guardar(true);            // esta acción sí modifica los intereses en el servidor
@@ -2616,7 +2619,7 @@ function limpiar(){
   if(!confirm('Se quitarán las marcas de las comisiones modificables. Las dos comisiones ' +
               'bloqueadas conservarán su integración. ¿Desea continuar?')) return;
   marcas = {};
-  sembrarBloqueadas();            // las inmutables (Presupuesto 2027 y Seguimiento PEL) se conservan
+  sembrarBloqueadas();            // las inmutables (Presupuesto 2027 y Verificación) se conservan
   verificadas = {};
   prelacion = {};
   guardar();

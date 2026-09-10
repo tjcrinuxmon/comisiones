@@ -213,7 +213,6 @@ dialog::backdrop{background:rgba(23,23,26,.4)}
 .prel-vacio{font-size:11px;color:#c3c6cd;padding:2px 5px}
 .prel-add{margin-top:6px;width:100%;font:inherit;font-size:11px;padding:4px 6px;
   border:1px solid #e4e2e9;border-radius:6px;color:var(--tenue);background:#fff;cursor:pointer}
-  border:1px dashed #e4e2e9;border-radius:8px;min-height:50px}
 
 /* ---- Vista de detalle ---- */
 .volver{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ine);cursor:pointer;margin:0 0 14px}
@@ -251,6 +250,35 @@ dialog::backdrop{background:rgba(23,23,26,.4)}
 .medidor{display:flex;gap:3px;margin-top:5px}
 .medidor i{height:4px;width:14px;border-radius:2px;background:#eceaf0;display:block}
 .medidor i.on{background:var(--ine)} .medidor i.lim{background:var(--falta)} .medidor i.ex{background:var(--excede)}
+
+/* ---- Impresión de la pantalla (botón «Imprimir pantalla») ----
+   Imprime las tarjetas tal como se ven. Sin esto el navegador saca también la
+   barra de acciones y el banco de consejerías, y —lo importante— parte las
+   tarjetas en el corte de página: una tarjeta que cae justo en el corte llega a
+   desaparecer del PDF, con lo que la banda dice «5 comisiones» y sólo se ven 4. */
+@media print{
+  @page{size:A4 portrait;margin:10mm}
+  /* Los fondos de color son información aquí: la banda del grupo, el rosa de la
+     presidencia y el rayado de las bloqueadas. Sin esto el navegador los
+     descarta y quedan fichas blancas indistinguibles. */
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff}
+  .encabezado .acciones,#barraModo,#aviso,.portada,dialog,.banco,.rail{display:none!important}
+  .encabezado{padding:0 0 10px;background:#fff;color:var(--tinta)}
+  .encabezado h1{font-size:15px}
+  .encabezado p{display:none}
+  .encabezado .logo img{height:26px}
+  .lienzo{display:block;padding:0}
+  .rejilla{gap:9px}
+  /* Nada de esto debe quedar cortado entre dos páginas. */
+  .caja-com,.grupo,.chip,.prelacion{break-inside:avoid;page-break-inside:avoid}
+  /* Un encabezado de grupo al pie de la página, con sus tarjetas en la
+     siguiente, se lee como si el grupo estuviera vacío. */
+  .grupo{break-after:avoid;page-break-after:avoid;margin:12px 0 2px}
+  .caja-com{min-height:0}
+  /* En papel no hay nada que arrastrar ni que quitar. */
+  .chip .x,.prel-add,.supl .x{display:none!important}
+}
 </style>
 </head>
 <body>
@@ -290,6 +318,7 @@ dialog::backdrop{background:rgba(23,23,26,.4)}
     <button class="btn" onclick="verReglas()">Reglas generales</button>
     <button class="btn" id="btnHallazgos" onclick="verHallazgos()" style="display:none">Hallazgos</button>
     <button class="btn" id="btnReporte" onclick="generarReporte()" style="display:none">Reporte</button>
+    <button class="btn" id="btnPantalla" onclick="imprimirPantalla()" style="display:none">Imprimir pantalla</button>
     <button class="btn" id="btnRestaurar" onclick="restaurarVigente()" style="display:none">Restaurar vigente</button>
     <button class="btn" id="btnClaves"  onclick="verClaves()"  style="display:none">Contraseñas</button>
     <button class="btn" id="btnVentana" onclick="abrirConfig()" style="display:none">Disponibilidad</button>
@@ -1227,6 +1256,9 @@ function pintar(){
     document.getElementById('btnHallazgos').style.display = '';
     document.getElementById('btnReporte').textContent =
       esInt() ? 'Imprimir intereses' : 'Imprimir integración';
+    /* Sólo tiene sentido en la vista de tarjetas: en la ficha de una consejería
+       lo que se imprimiría es una sola columna. */
+    document.getElementById('btnPantalla').style.display = vista === 'detalle' ? 'none' : '';
   }
   /* Acciones propias del modo, en su propia barra */
   const bm = document.getElementById('barraModo');
@@ -1674,6 +1706,15 @@ function verHallazgos(){
 /* Imprime lo que estás viendo: la integración o los intereses expresados.
    Antes leía siempre `marcas`, así que en modo intereses imprimía la
    integración y no había forma de sacar en papel lo capturado. */
+/* Imprime la pantalla tal como se ve: las tarjetas con sus fichas, agrupadas.
+   Es distinto del "Reporte", que arma una matriz de comisiones por consejería
+   en una ventana aparte. Aquí se imprime el documento mismo, y de la apariencia
+   se encarga el @media print de más arriba. */
+function imprimirPantalla(){
+  if(vista === 'detalle') return aviso('Vuelve a la vista de comisiones para imprimirla.');
+  window.print();
+}
+
 function generarReporte(){
   const int = esInt();
   const cols = CONSEJERIAS;

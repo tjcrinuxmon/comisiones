@@ -2141,7 +2141,10 @@ function generarReporte(){
     cuerpo += '<tr class="grupo"><td class="com" colspan="' + (cols.length + 1) + '">' +
               GRUPOS[g].toUpperCase() + '</td></tr>';
     coms.forEach(k => {
-      let fila = '<tr><td class="com">' + k.nombre + (k.bloqueada ? ' *' : '') +
+      /* La integración bloqueada se marca dos veces: con el * que remite al pie
+         y con un gris de fondo, que se ve de un vistazo sin ir a la nota. */
+      let fila = '<tr' + (k.bloqueada ? ' class="bloq"' : '') + '><td class="com">' +
+                 k.nombre + (k.bloqueada ? ' *' : '') +
                  (k.noComputa ? ' †' : '') + '</td>';
       cols.forEach(c => {
         const puesta  = estaPuesta(c.id, k.id);
@@ -2178,7 +2181,12 @@ function generarReporte(){
     '<!doctype html><html lang="es"><head><meta charset="utf-8">' +
     '<title>Integración de Comisiones INE — ' + VERSION_FECHA + '</title><style>' +
     '@page{size:landscape;margin:12mm}' +
-    '*{box-sizing:border-box}' +
+    /* Sin print-color-adjust el navegador descarta los fondos al imprimir: los
+       encabezados morados salían en gris, el gris de las bloqueadas no salía y
+       —lo grave— las celdas de presidencia quedaban con la X blanca sobre
+       blanco, ilegibles. La pantalla de Hallazgos y el reporte de la otra
+       aplicación ya lo traían; a éste se le había quedado pendiente. */
+    '*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
     'body{font-family:Arial,Helvetica,sans-serif;color:#222;margin:0;padding:18px}' +
     'h1{font-size:15px;margin:0 0 2px}.sub{font-size:11px;color:#555;margin:0 0 8px}' +
     '.leyenda{font-size:11px;margin:0 0 10px}' +
@@ -2190,6 +2198,10 @@ function generarReporte(){
     'th.com,td.com{text-align:left;white-space:nowrap;font-weight:bold}' +
     'thead th{background:#4a2c6d;color:#fff;white-space:normal;vertical-align:bottom}' +
     'tr.grupo td{background:#4a2c6d;color:#fff;text-align:left;font-weight:bold;letter-spacing:.5px}' +
+    /* Renglón de integración bloqueada. El :not(.presi) deja intacta la celda de
+       la presidencia: si el gris la pisara, se perdería el dato. */
+    'tr.bloq td:not(.presi){background:#eceaef;color:#5c5866}' +
+    'tr.bloq td.com{color:#42404a}' +
     'td.presi{background:#d5007f;color:#fff;font-weight:bold}' +
     'tr.total td{background:#efeaf5;font-weight:bold}' +
     'tr.grantotal td{background:#f9d9ec;color:#a80063;font-weight:bold}' +

@@ -269,13 +269,27 @@ dialog::backdrop{background:rgba(23,23,26,.4)}
   .encabezado p{display:none}
   .encabezado .logo img{height:26px}
   .lienzo{display:block;padding:0}
-  .rejilla{gap:9px}
+  /* En papel la rejilla deja de ser CSS grid y pasa a bloque con tarjetas
+     inline-block. No es capricho: los navegadores paginan mal el grid, y de ahí
+     venía que una tarjeta que caía en el corte se perdiera del PDF. El flujo
+     inline-block se parte de forma predecible y respeta los break-*. */
+  .rejilla{display:block;gap:0;margin:0 -4px}
+  .grupo{display:block;grid-column:auto}
+  .caja-com{
+    display:inline-block;vertical-align:top;
+    width:calc(33.333% - 8px);margin:0 4px 8px;min-height:0;
+  }
   /* Nada de esto debe quedar cortado entre dos páginas. */
   .caja-com,.grupo,.chip,.prelacion{break-inside:avoid;page-break-inside:avoid}
   /* Un encabezado de grupo al pie de la página, con sus tarjetas en la
      siguiente, se lee como si el grupo estuviera vacío. */
-  .grupo{break-after:avoid;page-break-after:avoid;margin:12px 0 2px}
-  .caja-com{min-height:0}
+  .grupo{break-after:avoid;page-break-after:avoid;margin:10px 4px 2px}
+
+  /* Las permanentes se quedan completas en la primera hoja: las temporales
+     abren hoja nueva. «Otros órganos» NO abre otra: va pegado a las temporales,
+     que es como se pidió. */
+  .grupo.g-temporal{break-before:page;page-break-before:always;margin-top:0}
+  .grupo.g-permanente,.grupo.g-otro{break-before:auto;page-break-before:auto}
   /* En papel no hay nada que arrastrar ni que quitar. */
   .chip .x,.prel-add,.supl .x{display:none!important}
 }
@@ -1726,7 +1740,10 @@ function generarReporte(){
     const sub = {}; cols.forEach(c => sub[c.id] = 0);
     cuerpo += '<tr class="grupo"><td class="com" colspan="' + (cols.length + 1) + '">' + GRUPOS[g].toUpperCase() + '</td></tr>';
     coms.forEach(k => {
-      let fila = '<tr><td class="com">' + k.nombre + (k.bloqueada ? ' *' : '') + (k.noComputa ? ' †' : '') + '</td>';
+      /* La integración bloqueada se marca dos veces: con el * que remite al pie
+         y con un gris de fondo, que se ve de un vistazo sin ir a la nota. */
+      let fila = '<tr' + (k.bloqueada ? ' class="bloq"' : '') + '><td class="com">' +
+                 k.nombre + (k.bloqueada ? ' *' : '') + (k.noComputa ? ' †' : '') + '</td>';
       cols.forEach(c => {
         const puesta = fuente()[clave(c.id, k.id)] !== undefined;
         /* En intereses la presidencia son PROPUESTAS y puede haber varias,
@@ -1789,6 +1806,10 @@ function generarReporte(){
     'th.com,td.com{text-align:left;white-space:nowrap;font-weight:bold}' +
     'thead th{background:#4a2c6d;color:#fff;vertical-align:bottom}' +
     'tr.grupo td{background:#4a2c6d;color:#fff;text-align:left;font-weight:bold;letter-spacing:.5px}' +
+    /* Renglón de integración bloqueada. El :not(.presi) deja intacta la celda de
+       la presidencia: si el gris la pisara, se perdería el dato. */
+    'tr.bloq td:not(.presi){background:#eceaef;color:#5c5866}' +
+    'tr.bloq td.com{color:#42404a}' +
     'td.presi{background:#d5007f;color:#fff;font-weight:bold;outline:1.5px solid #a80063;outline-offset:-1.5px}' +
     'tr.total td{background:#efeaf5;font-weight:bold}' +
     'tr.grantotal td{background:#f9d9ec;color:#a80063;font-weight:bold}' +

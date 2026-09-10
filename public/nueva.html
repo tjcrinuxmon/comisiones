@@ -1805,22 +1805,38 @@ function imprimirPantalla(){
   w.document.write(doc);
   w.document.close();
 
-  /* Se mide con el documento ya maquetado y se encoge lo que haga falta.
-     La escala es LA MISMA para las dos hojas —la que necesite la más apretada—
-     porque un documento con la primera hoja al 74 % y la segunda al 100 % se
-     ve como dos documentos distintos engrapados. */
+  /* Ajuste al alto SIN perder el ancho.
+     Encoger a secas resuelve el alto pero angosta la hoja en la misma
+     proporción y deja media página en blanco a la derecha. Por eso, cada vez
+     que se reduce la escala, el contenido se ensancha lo mismo: a escala 0,75
+     la hoja se maqueta a 194/0,75 mm y al dibujarse vuelve a medir 194 mm. El
+     ancho impreso no cambia nunca; lo que cambia es cuánto cabe en él.
+
+     Como ensanchar reacomoda las tarjetas —más espacio por columna, menos
+     renglones por nombre— el alto no baja de forma proporcional, así que no
+     hay fórmula directa: se itera hasta que entra. Converge en dos o tres
+     vueltas; el tope de ocho es sólo para no colgarse nunca.
+
+     La escala es LA MISMA para las dos hojas: un documento con la primera al
+     75 % y la segunda al 100 % se ve como dos documentos engrapados. */
   const ajustar = () => {
     const disponible = (IMPR.alto - IMPR.reserva) * IMPR.MM;
     const cajas = [...w.document.querySelectorAll('.hoja')];
-    cajas.forEach(h => { h.style.zoom = ''; });
-    /* El 0.98 no es superstición: `zoom` redondea, y la escala exacta dejaba la
-       hoja 3 px por encima del límite —suficiente para que se fuera a otra
-       página, que es justo lo que se quiere evitar. */
-    const escala = cajas.reduce((min, h) => {
-      const alto = h.getBoundingClientRect().height;
-      return alto > disponible ? Math.min(min, (disponible / alto) * 0.98) : min;
-    }, 1);
-    if(escala < 1) cajas.forEach(h => { h.style.zoom = escala.toFixed(4); });
+    let escala = 1;
+
+    for(let vuelta = 0; vuelta < 8; vuelta++){
+      cajas.forEach(h => {
+        h.style.width = (IMPR.ancho / escala) + 'mm';
+        h.style.zoom  = escala === 1 ? '' : escala.toFixed(4);
+      });
+      const alto = Math.max(...cajas.map(h => h.getBoundingClientRect().height));
+      if(alto <= disponible) break;
+      /* El 0,99 no es superstición: `zoom` redondea, y la escala exacta dejaba
+         la hoja unos pixeles por encima del límite —suficiente para irse a otra
+         página, que es justo lo que se quiere evitar. */
+      escala *= (disponible / alto) * 0.99;
+    }
+
     w.focus();
     setTimeout(() => w.print(), 250);
   };

@@ -1133,17 +1133,21 @@ async function cargarHistorial(){
    Quejas y Denuncias). Lista ordenada de consejerías suplentes; ser suplente
    NO cuenta como integrar la comisión ni para el límite de permanentes.
 
-   Corregido el 09/09/2026: iba encabezado por De la Cruz y Cruz García caía en
-   sexto lugar. El orden correcto es alfabético por primer apellido —Cruz García
-   antes que De la Cruz—, como quedó en la integración de esa fecha.
+   Corregido el 09/09/2026: el orden es ALFABÉTICO POR PRIMER APELLIDO. Iba
+   encabezado por De la Cruz, con Cruz García en sexto lugar y sin López Vences.
+
+     Castillo Loza · Cruz García · de la Cruz Magaña · Espadas Ancona ·
+     Faz Mora · Humphrey Jordán · López Vences
+
+   No aparecen Chávez López, Gómez Puga ni Montaño Ventura porque hoy integran
+   la comisión como titulares, y no se puede ser titular y suplente de la misma
+   comisión. Si alguno dejara de integrarla habría que agregarlo en el lugar que
+   le toque por apellido.
 
    No entra en ninguna huella del sello (ver huellasActuales), así que
-   reordenarlo no obliga a resellar el catálogo.
-
-   Quien ya integra la comisión se descarta al sembrar la lista: no se puede ser
-   titular y suplente de la misma comisión. */
+   reordenarlo no obliga a resellar el catálogo. */
 const PRELACION_VIGENTE = {
-  quejas: ['cruzg','delacruz','espadas','faz','humphrey','lopezv','montano']
+  quejas: ['castillo','cruzg','delacruz','espadas','faz','humphrey','lopezv']
 };
 
 /* =====================================================================

@@ -153,7 +153,7 @@ const HUELLAS_ORIGINALES = {
   tope:        '300CA0D02DAFAC62',   // 25/08/2026: el límite pasó de 4 a 5 (antes 310CA263B39B76CD)
   consejerias: '748C6D2AB1698C74',
   comisiones:  '2DD03C4C1D1259F6',   // 09/09/2026: salió Seguimiento PEL (antes 622B51DBF962ADA5)
-  vigente:     'B20B6FAF2EBA0875',   // 09/09/2026: integración de esa fecha (antes 1512ECDD113B5BC3)
+  vigente:     'F1BBC019F591E86B',   // 09/09/2026: integración de esa fecha (antes 1512ECDD113B5BC3)
   historial:   '830645BE6DAECBD8'
 };
 
@@ -292,10 +292,11 @@ const INTEGRACION_VIGENTE = {
     { comision:'capyorg',       fecha:'2026-09-09' }
   ],
   lopezv: [
+    /* Bajó de Transparencia al cierre del 09/09/2026: la comisión queda en tres
+       —Chávez, De la Cruz y Montaño, que preside—, que es su mínimo. */
     { comision:'registro',      fecha:'2026-09-09' },
     { comision:'ople',          fecha:'2026-09-09' },
     { comision:'servicio',      fecha:'2023-09-08', presidencia:true },
-    { comision:'transparencia', fecha:'2026-04-27' },
     { comision:'voto',          fecha:'2026-09-09' },
     { comision:'presupuesto',   fecha:'2026-04-27' }
   ],

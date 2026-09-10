@@ -397,7 +397,16 @@ async function cargarHistorial(){
 /* Orden de prelación de suplencias por comisión (Art. 44.2.c del Reglamento de
    Quejas y Denuncias). Lista ordenada de consejerías suplentes; ser suplente
    NO cuenta como integrar la comisión ni para el límite de permanentes.
-   Se siembra con el orden del Acuerdo INE/CG241/2026 y puede reordenarse. */
+
+   Corregido el 09/09/2026: iba encabezado por De la Cruz y Cruz García caía en
+   sexto lugar. El orden correcto es alfabético por primer apellido —Cruz García
+   antes que De la Cruz—, como quedó en la integración de esa fecha.
+
+   No entra en ninguna huella del sello (ver huellasActuales), así que
+   reordenarlo no obliga a resellar el catálogo.
+
+   Quien ya integra la comisión se descarta al sembrar la lista: no se puede ser
+   titular y suplente de la misma comisión. */
 const PRELACION_VIGENTE = {
-  quejas: ['delacruz','espadas','faz','humphrey','montano','cruzg','chavez']
+  quejas: ['cruzg','delacruz','espadas','faz','humphrey','lopezv','montano']
 };

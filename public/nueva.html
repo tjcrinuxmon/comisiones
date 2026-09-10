@@ -257,7 +257,7 @@ dialog::backdrop{background:rgba(23,23,26,.4)}
    tarjetas en el corte de página: una tarjeta que cae justo en el corte llega a
    desaparecer del PDF, con lo que la banda dice «5 comisiones» y sólo se ven 4. */
 @media print{
-  @page{size:A4 portrait;margin:10mm}
+  @page{size:A4 portrait;margin:8mm}
   /* Los fondos de color son información aquí: la banda del grupo, el rosa de la
      presidencia y el rayado de las bloqueadas. Sin esto el navegador los
      descarta y quedan fichas blancas indistinguibles. */
@@ -292,6 +292,23 @@ dialog::backdrop{background:rgba(23,23,26,.4)}
   .grupo.g-permanente,.grupo.g-otro{break-before:auto;page-break-before:auto}
   /* En papel no hay nada que arrastrar ni que quitar. */
   .chip .x,.prel-add,.supl .x{display:none!important}
+
+  /* Lo que impedía que las diez permanentes cupieran en una hoja era el bloque
+     de suplencias de Quejas: siete filas dimensionadas para arrastrarlas y para
+     que la × sea fácil de atinar, unos 40 px cada una, más de 300 px sólo esa
+     tarjeta. Sin arrastre ni × en papel, esas medidas no compran nada, así que
+     aquí las filas van compactas. Son ~160 px menos, que es justo lo que
+     faltaba. En pantalla NO cambia nada: esto vive dentro de @media print. */
+  .prelacion{margin-top:7px;padding-top:6px}
+  .prel-tit{margin-bottom:3px}
+  .prel-lista{gap:0;min-height:0}
+  .supl{padding:1px 4px;gap:7px}
+  .supl .nom{padding-right:0}
+  /* Y un apretón parejo al resto, para dejar holgura y que no vuelva a quedar
+     al filo: si una tarjeta crece un poco, sigue cabiendo. */
+  .chip{padding:2px 6px}
+  .gente{gap:3px}
+  .caja-com{padding:9px 10px 8px}
 }
 </style>
 </head>
@@ -1721,12 +1738,94 @@ function verHallazgos(){
    Antes leía siempre `marcas`, así que en modo intereses imprimía la
    integración y no había forma de sacar en papel lo capturado. */
 /* Imprime la pantalla tal como se ve: las tarjetas con sus fichas, agrupadas.
-   Es distinto del "Reporte", que arma una matriz de comisiones por consejería
-   en una ventana aparte. Aquí se imprime el documento mismo, y de la apariencia
-   se encarga el @media print de más arriba. */
+   Es distinto del "Reporte", que arma una matriz de comisiones por consejería.
+
+   Va en una ventana aparte, y NO por gusto: imprimir el documento mismo deja la
+   paginación en manos del navegador, y entonces «cabe o no cabe» depende del
+   tamaño de papel, de los márgenes y de si el usuario dejó encendidos los
+   encabezados del navegador. El resultado era que a veces las permanentes se
+   partían en dos hojas y todo se corría a tres.
+
+   Aquí el documento se arma con DOS hojas explícitas —permanentes en la
+   primera, temporales y otros órganos en la segunda— y, ya renderizado, se mide
+   cada una: si alguna se pasa del alto disponible se le reduce la escala lo
+   justo para que entre. Así son siempre dos hojas, sin recortar nada. */
+const IMPR = {
+  MM: 96 / 25.4,          // píxeles CSS por milímetro
+  ancho: 210 - 16,        // A4 vertical menos los márgenes de 8 mm
+  alto:  297 - 16,
+  /* Colchón para lo que no se puede consultar desde aquí: si la persona deja
+     encendidos los encabezados y pies del navegador, el área imprimible se
+     encoge y lo que entraba al ras se sale. Reservarlo cuesta un poco de
+     tamaño; no reservarlo cuesta la tercera hoja. */
+  reserva: 14
+};
+
 function imprimirPantalla(){
   if(vista === 'detalle') return aviso('Vuelve a la vista de comisiones para imprimirla.');
-  window.print();
+  const rejilla = document.querySelector('.rejilla');
+  if(!rejilla) return aviso('No hay nada que imprimir.');
+
+  /* Se reparte lo que hay en pantalla en dos hojas: la segunda empieza en la
+     banda de comisiones temporales y se lleva también «Otros órganos». */
+  const hojas = [[], []];
+  let cual = 0;
+  [...rejilla.children].forEach(nodo => {
+    if(nodo.classList.contains('grupo') && nodo.classList.contains('g-temporal')) cual = 1;
+    hojas[cual].push(nodo.outerHTML);
+  });
+
+  const estilos = [...document.querySelectorAll('style')].map(s => s.textContent).join('\n');
+
+  const doc =
+    '<!doctype html><html lang="es"><head><meta charset="utf-8">' +
+    '<title>Integración de Comisiones INE — ' + VERSION_FECHA + '</title>' +
+    '<style>' + estilos + '</style>' +
+    '<style>' +
+      '@page{size:A4 portrait;margin:8mm}' +
+      'body{margin:0;background:#fff}' +
+      /* Cada hoja es un bloque de ancho fijo: así lo que se mide aquí es lo
+         mismo que se imprimirá, y no depende del tamaño de la ventana. */
+      /* El salto va ANTES de cada hoja a partir de la segunda, no después de
+         cada una. Con break-after había que exceptuar la última con
+         :last-child, y basta que algo se agregue después —un nodo cualquiera al
+         final del body— para que la excepción deje de aplicar y salga una hoja
+         en blanco al final. Así no hay excepción que se pueda romper. */
+      '.hoja{width:' + IMPR.ancho + 'mm}' +
+      '.hoja + .hoja{break-before:page;page-break-before:always}' +
+      /* La paginación la llevan las hojas. El salto que trae la banda de
+         temporales sobra aquí y metería una hoja en blanco. */
+      '.grupo.g-temporal{break-before:auto!important;page-break-before:auto!important}' +
+    '</style></head><body>' +
+    hojas.map(h => '<div class="hoja"><div class="rejilla">' + h.join('') + '</div></div>').join('') +
+    '</body></html>';
+
+  const w = window.open('', '_blank');
+  if(!w) return aviso('El navegador bloqueó la ventana; permite las ventanas emergentes.');
+  w.document.write(doc);
+  w.document.close();
+
+  /* Se mide con el documento ya maquetado y se encoge lo que haga falta.
+     La escala es LA MISMA para las dos hojas —la que necesite la más apretada—
+     porque un documento con la primera hoja al 74 % y la segunda al 100 % se
+     ve como dos documentos distintos engrapados. */
+  const ajustar = () => {
+    const disponible = (IMPR.alto - IMPR.reserva) * IMPR.MM;
+    const cajas = [...w.document.querySelectorAll('.hoja')];
+    cajas.forEach(h => { h.style.zoom = ''; });
+    /* El 0.98 no es superstición: `zoom` redondea, y la escala exacta dejaba la
+       hoja 3 px por encima del límite —suficiente para que se fuera a otra
+       página, que es justo lo que se quiere evitar. */
+    const escala = cajas.reduce((min, h) => {
+      const alto = h.getBoundingClientRect().height;
+      return alto > disponible ? Math.min(min, (disponible / alto) * 0.98) : min;
+    }, 1);
+    if(escala < 1) cajas.forEach(h => { h.style.zoom = escala.toFixed(4); });
+    w.focus();
+    setTimeout(() => w.print(), 250);
+  };
+  if(w.document.readyState === 'complete') setTimeout(ajustar, 350);
+  else w.addEventListener('load', () => setTimeout(ajustar, 350));
 }
 
 function generarReporte(){

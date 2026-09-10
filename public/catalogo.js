@@ -107,10 +107,11 @@ const COMISIONES = [
   { id:'transparencia', nombre:'Transparencia, Acceso a la Información y Protección de Datos Personales',
                         corto:'Transparencia y Datos Personales',
                         min:3, max:5, grupo:'temporal' },
-  { id:'seguimiento',   nombre:'Seguimiento de los Procesos Electorales Locales 2025-2026',
-                        corto:'Seguimiento PEL 2025-2026',
-                        min:3, max:5, grupo:'temporal',
-                        bloqueada:true, comparacion:'excepcion' },
+  /* Seguimiento de los Procesos Electorales Locales 2025-2026 se retiró del
+     catálogo el 09/09/2026: ya no se quiere ver. Al quitarla de aquí desaparece
+     de la matriz, de las tarjetas, de los reportes y de todos los conteos —las
+     temporales pasan de cinco a cuatro—, sin dejar leyendas que explicar.
+     Su integración sigue en el historial de git por si hubiera que reponerla. */
   { id:'voto',          nombre:'Voto de las y los Mexicanos Residentes en el Extranjero',
                         corto:'Voto en el Extranjero',
                         min:3, max:5, grupo:'temporal' },
@@ -145,14 +146,14 @@ const comparacionAplica = k => (k.comparacion || 'aplica') === 'aplica';
    valores de abajo, que corresponden al archivo original. Si alguien
    edita el catálogo, el sello del encabezado lo delata.
    ===================================================================== */
-const VERSION       = '1.7';
-const VERSION_FECHA = '29/07/2026';
+const VERSION       = '1.8';
+const VERSION_FECHA = '09/09/2026';
 
 const HUELLAS_ORIGINALES = {
   tope:        '300CA0D02DAFAC62',   // 25/08/2026: el límite pasó de 4 a 5 (antes 310CA263B39B76CD)
   consejerias: '748C6D2AB1698C74',
-  comisiones:  '622B51DBF962ADA5',
-  vigente:     '1512ECDD113B5BC3',
+  comisiones:  '2DD03C4C1D1259F6',   // 09/09/2026: salió Seguimiento PEL (antes 622B51DBF962ADA5)
+  vigente:     'B20B6FAF2EBA0875',   // 09/09/2026: integración de esa fecha (antes 1512ECDD113B5BC3)
   historial:   '830645BE6DAECBD8'
 };
 
@@ -215,93 +216,95 @@ function revisarIntegridad(){
    real (ver mesesDesde) y se resalta en ámbar u rojo bajo cada celda.
    ===================================================================== */
 
-/* Permanentes: miembros y presidencias conforme a INE/CG241/2026 (las fechas
-   reflejan la racha continua de cada consejería; se afinan aparte para la
-   antigüedad). Temporales y Comité Editorial: integración aprobada en los
-   puntos PRIMERO y SEGUNDO del Acuerdo INE/CG241/2026 (27/04/2026).
-   La presidencia del Comité Editorial no se marca aquí: la hereda de quien
-   presida Capacitación Electoral (Espadas), ver autoPresi. */
+/* ACTUALIZADO EL 09/09/2026 con la integración acordada en esa fecha. Sustituye
+   a la que venía del Acuerdo INE/CG241/2026 (27/04/2026).
+
+   Las fechas son las de cada asignación: las que traen 2020-07-30, 2023-09-08 o
+   2026-04-27 vienen de acuerdos anteriores y marcan la racha continua de esa
+   consejería en esa comisión —de ahí se calcula la antigüedad frente al límite
+   legal de 3 años—; las de 2026-09-09 son las que se movieron ese día.
+
+   La presidencia del Comité Editorial NO se marca aquí: la hereda de quien
+   presida Capacitación Electoral —hoy Faz—, ver autoPresi.
+
+   Ya no aparece Seguimiento PEL 2025-2026: se retiró del catálogo ese mismo día
+   y sus cinco asignaciones se quitaron de aquí. Dejarlas habría sembrado marcas
+   de una comisión que ya no existe. */
 const INTEGRACION_VIGENTE = {
   castillo: [
+    { comision:'fiscalizacion', fecha:'2026-09-09' },
     { comision:'prerrogativas', fecha:'2023-09-08' },
-    { comision:'registro',      fecha:'2023-09-08' },
     { comision:'igualdad',      fecha:'2023-09-08' },
-    { comision:'quejas',        fecha:'2023-09-08', presidencia:true },
-    { comision:'transparencia', fecha:'2026-04-27', presidencia:true }
+    { comision:'voto',          fecha:'2026-09-09' }
   ],
   chavez: [
     { comision:'organizacion',  fecha:'2026-04-27' },
-    { comision:'fiscalizacion', fecha:'2026-04-27' },
-    { comision:'capacitacion',  fecha:'2026-04-27' },
-    { comision:'prerrogativas', fecha:'2026-04-27' },
-    { comision:'presupuesto',   fecha:'2026-04-27' },
-    { comision:'verificacion',  fecha:'2026-07-30', presidencia:true }
+    { comision:'prerrogativas', fecha:'2026-04-27', presidencia:true },
+    { comision:'quejas',        fecha:'2026-09-09' },
+    { comision:'verificacion',  fecha:'2026-07-30', presidencia:true },
+    { comision:'capyorg',       fecha:'2026-09-09' },
+    { comision:'transparencia', fecha:'2026-09-09' },
+    { comision:'presupuesto',   fecha:'2026-04-27' }
   ],
   cruzg: [
-    { comision:'organizacion',  fecha:'2026-04-27' },
-    { comision:'registro',      fecha:'2026-04-27' },
+    { comision:'organizacion',  fecha:'2026-04-27', presidencia:true },
+    { comision:'fiscalizacion', fecha:'2026-09-09' },
+    { comision:'registro',      fecha:'2026-04-27', presidencia:true },
     { comision:'ople',          fecha:'2026-04-27' },
-    { comision:'seguimiento',   fecha:'2026-04-27' },
-    { comision:'transparencia', fecha:'2026-04-27' }
+    { comision:'voto',          fecha:'2026-09-09' }
   ],
   delacruz: [
-    { comision:'capacitacion',  fecha:'2023-09-08' },
-    { comision:'prerrogativas', fecha:'2023-09-08', presidencia:true },
-    { comision:'registro',      fecha:'2023-09-08' },
-    { comision:'ople',          fecha:'2020-07-30' },
-    { comision:'seguimiento',   fecha:'2026-04-27' },
-    { comision:'voto',          fecha:'2026-04-27' },
+    { comision:'capacitacion',  fecha:'2026-09-09' },
+    { comision:'prerrogativas', fecha:'2023-09-08' },
+    { comision:'registro',      fecha:'2026-09-09' },
+    { comision:'verificacion',  fecha:'2026-07-30' },
+    { comision:'capyorg',       fecha:'2026-09-09', presidencia:true },
     { comision:'transparencia', fecha:'2026-04-27' },
     { comision:'presupuesto',   fecha:'2026-04-27' },
-    { comision:'editorial',     fecha:'2026-04-27' },
-    { comision:'verificacion',  fecha:'2026-07-30' }
+    { comision:'editorial',     fecha:'2026-04-27' }
   ],
   espadas: [
-    { comision:'fiscalizacion', fecha:'2020-07-30', presidencia:true },
-    { comision:'capacitacion',  fecha:'2023-09-08', presidencia:true },
-    { comision:'prerrogativas', fecha:'2020-07-30' },
-    { comision:'servicio',      fecha:'2023-09-08' },
-    { comision:'voto',          fecha:'2026-04-27' },
-    { comision:'presupuesto',   fecha:'2026-04-27' },
-    { comision:'editorial',     fecha:'2026-04-27' },
-    { comision:'verificacion',  fecha:'2026-07-30' }
-  ],
-  faz: [
-    { comision:'organizacion',  fecha:'2023-09-08', presidencia:true },
-    { comision:'ople',          fecha:'2020-07-30' },
-    { comision:'servicio',      fecha:'2023-09-08', presidencia:true },
-    { comision:'transparencia', fecha:'2026-04-27' }
-  ],
-  gomez: [
-    { comision:'fiscalizacion', fecha:'2026-04-27' },
-    { comision:'capacitacion',  fecha:'2026-04-27' },
-    { comision:'igualdad',      fecha:'2026-04-27' },
-    { comision:'quejas',        fecha:'2026-04-27' },
-    { comision:'voto',          fecha:'2026-04-27' }
-  ],
-  humphrey: [
     { comision:'fiscalizacion', fecha:'2020-07-30' },
     { comision:'capacitacion',  fecha:'2023-09-08' },
-    { comision:'prerrogativas', fecha:'2023-09-08' },
-    { comision:'registro',      fecha:'2020-07-30', presidencia:true },
-    { comision:'seguimiento',   fecha:'2026-04-27', presidencia:true },
-    { comision:'voto',          fecha:'2026-04-27' }
+    { comision:'ople',          fecha:'2026-09-09', presidencia:true },
+    { comision:'verificacion',  fecha:'2026-07-30' },
+    { comision:'capyorg',       fecha:'2026-09-09' },
+    { comision:'voto',          fecha:'2026-04-27' },
+    { comision:'presupuesto',   fecha:'2026-04-27' }
+  ],
+  faz: [
+    { comision:'capacitacion',  fecha:'2026-09-09', presidencia:true },
+    { comision:'registro',      fecha:'2026-09-09' },
+    { comision:'servicio',      fecha:'2023-09-08' },
+    { comision:'capyorg',       fecha:'2026-09-09' },
+    { comision:'editorial',     fecha:'2026-09-09' }
+  ],
+  gomez: [
+    { comision:'registro',      fecha:'2026-09-09' },
+    { comision:'igualdad',      fecha:'2026-04-27' },
+    { comision:'quejas',        fecha:'2026-04-27', presidencia:true },
+    { comision:'voto',          fecha:'2026-04-27', presidencia:true }
+  ],
+  humphrey: [
+    { comision:'organizacion',  fecha:'2026-09-09' },
+    { comision:'fiscalizacion', fecha:'2020-07-30' },
+    { comision:'igualdad',      fecha:'2026-09-09', presidencia:true },
+    { comision:'capyorg',       fecha:'2026-09-09' }
   ],
   lopezv: [
-    { comision:'igualdad',      fecha:'2023-09-08', presidencia:true },
-    { comision:'quejas',        fecha:'2023-09-08' },
-    { comision:'servicio',      fecha:'2023-09-08' },
-    { comision:'seguimiento',   fecha:'2026-04-27' },
+    { comision:'registro',      fecha:'2026-09-09' },
+    { comision:'ople',          fecha:'2026-09-09' },
+    { comision:'servicio',      fecha:'2023-09-08', presidencia:true },
     { comision:'transparencia', fecha:'2026-04-27' },
+    { comision:'voto',          fecha:'2026-09-09' },
     { comision:'presupuesto',   fecha:'2026-04-27' }
   ],
   montano: [
-    { comision:'fiscalizacion', fecha:'2023-09-08' },
-    { comision:'registro',      fecha:'2023-09-08' },
-    { comision:'igualdad',      fecha:'2023-09-08' },
-    { comision:'ople',          fecha:'2023-09-08', presidencia:true },
-    { comision:'seguimiento',   fecha:'2026-04-27' },
-    { comision:'voto',          fecha:'2026-04-27', presidencia:true },
+    { comision:'fiscalizacion', fecha:'2023-09-08', presidencia:true },
+    { comision:'quejas',        fecha:'2026-09-09' },
+    { comision:'ople',          fecha:'2023-09-08' },
+    { comision:'servicio',      fecha:'2026-09-09' },
+    { comision:'transparencia', fecha:'2026-09-09', presidencia:true },
     { comision:'presupuesto',   fecha:'2026-04-27', presidencia:true }
   ]
 };

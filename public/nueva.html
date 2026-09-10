@@ -326,8 +326,8 @@ dialog::backdrop{background:rgba(23,23,26,.4)}
       <p>El sistema compara cada integración modificable con el Acuerdo INE/CG241/2026.
       En cada comisión debe pulsarse su <b>botón de verificación</b> (en el pie de la columna)
       antes de continuar; sólo cuando todas están verificadas puede concluirse la integración.
-      En las dos comisiones temporales inmutables (Presupuesto 2027 y Seguimiento PEL 2025-2026)
-      únicamente se <b>confirma</b> la integración.</p>
+      En la comisión temporal inmutable (Presupuesto 2027) únicamente se
+      <b>confirma</b> la integración.</p>
     </div>
 
     <div class="regla">
@@ -393,8 +393,8 @@ dialog::backdrop{background:rgba(23,23,26,.4)}
       <ul>
         <li>Las comisiones temporales siempre son presididas por una Consejera o Consejero Electoral
         y se integran con un mínimo de 3 y un máximo de 5 consejerías, bajo el principio de paridad.</li>
-        <li>La Comisión de Presupuesto 2027 y la de Seguimiento de los Procesos Electorales Locales
-        2025-2026 conservan su <b>integración bloqueada</b>: no se editan en la matriz.</li>
+        <li>La Comisión de Presupuesto 2027 conserva su <b>integración bloqueada</b>:
+        no se edita en la matriz.</li>
         <li>El <b>Comité Editorial</b> se integra con 2 personas, bajo paridad, y lo preside
         automáticamente quien presida la Comisión de Capacitación Electoral y Educación Cívica;
         esa persona debe además estar <b>integrada</b> al Comité (no puede presidir sin integrarlo).</li>
@@ -560,7 +560,7 @@ const integrantes = k => CONSEJERIAS.filter(c => estaPuesta(c.id, k.id));
 const permDe = idC => COMISIONES.filter(k => cuentaLimite(k) && estaPuesta(idC, k.id)).length;
 
 /* Comisiones que no cambian: en intereses vienen precargadas y no se editan. */
-const INTERES_FIJAS = ['seguimiento', 'presupuesto', 'verificacion'];
+const INTERES_FIJAS = ['presupuesto', 'verificacion'];
 const esFija = k => INTERES_FIJAS.includes(k.id);
 const ini = n => n.split(' ').filter(w => w.length > 2).slice(-2).map(w => w[0]).join('');
 

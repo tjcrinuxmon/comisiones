@@ -504,8 +504,8 @@ body.ventana-cerrada.rol-consejero td.celda .presi.puesta{
       <p>El sistema compara cada integración modificable con el Acuerdo INE/CG241/2026.
       En cada comisión debe pulsarse su <b>botón de verificación</b> (en el pie de la columna)
       antes de continuar; sólo cuando todas están verificadas puede concluirse la integración.
-      En las dos comisiones temporales inmutables (Presupuesto 2027 y Seguimiento PEL 2025-2026)
-      únicamente se <b>confirma</b> la integración.</p>
+      En la comisión temporal inmutable (Presupuesto 2027) únicamente se
+      <b>confirma</b> la integración.</p>
     </div>
 
     <div class="regla">
@@ -571,8 +571,8 @@ body.ventana-cerrada.rol-consejero td.celda .presi.puesta{
       <ul>
         <li>Las comisiones temporales siempre son presididas por una Consejera o Consejero Electoral
         y se integran con un mínimo de 3 y un máximo de 5 consejerías, bajo el principio de paridad.</li>
-        <li>La Comisión de Presupuesto 2027 y la de Seguimiento de los Procesos Electorales Locales
-        2025-2026 conservan su <b>integración bloqueada</b>: no se editan en la matriz.</li>
+        <li>La Comisión de Presupuesto 2027 conserva su <b>integración bloqueada</b>:
+        no se edita en la matriz.</li>
         <li>El <b>Comité Editorial</b> se integra con 2 personas, bajo paridad, y lo preside
         automáticamente quien presida la Comisión de Capacitación Electoral y Educación Cívica;
         esa persona debe además estar <b>integrada</b> al Comité (no puede presidir sin integrarlo).</li>
@@ -830,13 +830,13 @@ function sembrarBloqueadas(){
 }
 
 /* Comisiones que por ahora NO cambian: en "intenciones" se precargan con su
-   integración vigente (Seguimiento PEL y Presupuesto —bloqueadas— y el Comité
-   Editorial). Si una no está cargada en intereses, se siembra desde la
-   integración vigente (miembros y, si la hay, la presidencia). */
+   integración vigente (Presupuesto y Verificación —bloqueadas—). Si una no está
+   cargada en intereses, se siembra desde la integración vigente (miembros y, si
+   la hay, la presidencia). */
 /* Fijas = comisiones que NO cambian (bloqueadas, no editables). El Comité
    Editorial NO es fija: se puede elegir/cambiar; su presidencia es automática
    (quien presida Capacitación) y el segundo lugar es libre. */
-const INTERES_FIJAS = ['seguimiento', 'presupuesto', 'verificacion'];
+const INTERES_FIJAS = ['presupuesto', 'verificacion'];
 const esFija = k => INTERES_FIJAS.includes(k.id);
 function cargarInteresesFijas(){
   INTERES_FIJAS.forEach(idK => {
@@ -1188,9 +1188,10 @@ function construir(){
          puede tocar la columna y el resto de las leyendas —la fecha en que se
          integró, el «no suma a los totales»— sólo alargan la cabecera sin
          cambiar nada de lo que se puede hacer ahí. Aplica a Verificación de
-         Integridad, Seguimiento PEL y Presupuesto 2027.
-         Ojo: se oculta la leyenda, no la regla. Seguimiento sigue sin sumar a
-         los totales aunque ya no lo anuncie en la columna. */
+         Integridad y a Presupuesto 2027.
+         Ojo: oculta la leyenda, no la regla. Hoy ninguna comisión usa
+         noComputa, pero si alguna vuelve a usarlo y está bloqueada, seguirá
+         sin sumar aunque no lo anuncie en la columna. */
       (k.bloqueada
         ? '<span class="nueva">integración bloqueada</span>'
         : (k.autoPresi ? '<span class="nueva">preside quien presida Capacitación</span>' : '') +
@@ -1775,7 +1776,7 @@ function alternarPresidencia(idC, idK){
 function verificar(idK){
   const k = COMISIONES.find(x => x.id === idK);
 
-  if(!esModificable(k)){                          // Presupuesto 2027 y Seguimiento PEL
+  if(!esModificable(k)){                          // Presupuesto 2027 y Verificación de Integridad
     verificadas[k.id] = firmaComision(k);
     guardar(); pintar();
     return mostrarAviso(k.nombre + ': integración confirmada.');
@@ -1938,10 +1939,10 @@ function alternarModo(){
 }
 
 /* Borra sólo la expresión de intereses (no toca la integración real). Conserva
-   precargadas las comisiones que no cambian (Seguimiento, Presupuesto, Comité). */
+   precargadas las comisiones que no cambian (ver INTERES_FIJAS). */
 function limpiarIntereses(){
-  if(!confirm('Se borrarán las expresiones de interés (se conservan precargadas Seguimiento, ' +
-              'Presupuesto y Comité Editorial). La integración real no se toca. ¿Continuar?')) return;
+  if(!confirm('Se borrarán las expresiones de interés (se conservan precargadas ' +
+              'Presupuesto 2027 y Verificación de Integridad). La integración real no se toca. ¿Continuar?')) return;
   intereses = {};
   cargarInteresesFijas();
   guardar(true);            // esta acción sí modifica los intereses en el servidor
@@ -2238,7 +2239,7 @@ function limpiar(){
   if(!confirm('Se quitarán las marcas de las comisiones modificables. Las dos comisiones ' +
               'bloqueadas conservarán su integración. ¿Desea continuar?')) return;
   marcas = {};
-  sembrarBloqueadas();            // las inmutables (Presupuesto 2027 y Seguimiento PEL) se conservan
+  sembrarBloqueadas();            // las inmutables (Presupuesto 2027 y Verificación) se conservan
   verificadas = {};
   prelacion = {};
   guardar();
